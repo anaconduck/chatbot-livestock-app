@@ -20,6 +20,7 @@ import {
   Inbox,
   Loader2,
 } from "lucide-react";
+import { PdfPreviewModal } from "@/components/admin/PdfPreviewModal";
 
 export default function AdminDocumentsPage() {
   const { user, logout } = useAuth();
@@ -29,6 +30,10 @@ export default function AdminDocumentsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
+
+  // PDF Preview State
+  const [previewDoc, setPreviewDoc] = useState<KnowledgeDocument | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Form State
   const [title, setTitle] = useState("");
@@ -281,10 +286,22 @@ export default function AdminDocumentsPage() {
                         {new Date(doc.created_at).toLocaleDateString("id-ID")}
                       </td>
                       <td className="py-4 px-3 text-right">
-                        <div className="inline-flex items-center gap-2">
+                        <div className="inline-flex items-center gap-1.5">
                           <button
+                            type="button"
+                            onClick={() => {
+                              setPreviewDoc(doc);
+                              setIsPreviewOpen(true);
+                            }}
+                            className="p-1.5 rounded-lg text-[#4A2D1B] hover:text-[#DE992B] hover:bg-[#FAF4EB] transition-colors"
+                            title="Pratinjau PDF"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => handleDelete(doc.id)}
-                            className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50"
+                            className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors"
                             title="Hapus"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -409,6 +426,16 @@ export default function AdminDocumentsPage() {
           </div>
         </div>
       )}
+
+      {/* In-App PDF Preview Modal */}
+      <PdfPreviewModal
+        document={previewDoc}
+        isOpen={isPreviewOpen}
+        onClose={() => {
+          setIsPreviewOpen(false);
+          setPreviewDoc(null);
+        }}
+      />
     </div>
   );
 }

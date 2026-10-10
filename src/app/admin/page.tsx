@@ -21,7 +21,9 @@ import {
   Inbox,
   Loader2,
   FolderUp,
+  Eye,
 } from "lucide-react";
+import { PdfPreviewModal } from "@/components/admin/PdfPreviewModal";
 
 export default function AdminDashboardPage() {
   const { user, logout } = useAuth();
@@ -36,6 +38,10 @@ export default function AdminDashboardPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+
+  // PDF Preview Modal State
+  const [previewDoc, setPreviewDoc] = useState<KnowledgeDocument | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Form states
   const [title, setTitle] = useState("");
@@ -496,13 +502,27 @@ export default function AdminDashboardPage() {
                         {(Number(doc.file_size_bytes || 0) / (1024 * 1024)).toFixed(1)} MB
                       </td>
                       <td className="py-4 px-3 text-right">
-                        <button
-                          onClick={() => handleDelete(doc.id)}
-                          className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors"
-                          title="Hapus Dokumen"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPreviewDoc(doc);
+                              setIsPreviewOpen(true);
+                            }}
+                            className="p-1.5 rounded-lg text-[#4A2D1B] hover:text-[#DE992B] hover:bg-[#FAF4EB] transition-colors"
+                            title="Pratinjau PDF"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(doc.id)}
+                            className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors"
+                            title="Hapus Dokumen"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -517,6 +537,16 @@ export default function AdminDashboardPage() {
           </div>
         </section>
       </main>
+
+      {/* In-App PDF Preview Modal */}
+      <PdfPreviewModal
+        document={previewDoc}
+        isOpen={isPreviewOpen}
+        onClose={() => {
+          setIsPreviewOpen(false);
+          setPreviewDoc(null);
+        }}
+      />
     </div>
   );
 }
