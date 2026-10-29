@@ -4,12 +4,15 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Send, X, Maximize2, Loader2, BookOpen } from "lucide-react";
+import { useAuth } from "@/lib/auth/context";
 import type { ChatMessage } from "@/types";
 
 export const FloatingChatbot: React.FC = () => {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [conversationId, setConversationId] = useState<string>();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "initial-greeting",
@@ -49,7 +52,7 @@ export const FloatingChatbot: React.FC = () => {
 
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
-      conversation_id: "quick-chat",
+      conversation_id: conversationId || "quick-chat",
       role: "user",
       content: userText,
       created_at: new Date().toISOString(),
@@ -64,15 +67,23 @@ export const FloatingChatbot: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: userText,
-          conversation_id: "quick-chat",
+          ...(conversationId ? { conversation_id: conversationId } : {}),
         }),
       });
 
       const data = await res.json();
 
+      if (!res.ok) {
+        throw new Error(data.error || "Gagal memproses pertanyaan.");
+      }
+
+      if (data.conversation_id) {
+        setConversationId(data.conversation_id);
+      }
+
       const aiMessage: ChatMessage = {
         id: `ai-${Date.now()}`,
-        conversation_id: "quick-chat",
+        conversation_id: data.conversation_id || conversationId || "quick-chat",
         role: "assistant",
         content: data.answer || "Maaf, terjadi kendala saat memproses jawaban.",
         sources: data.sources || [],
@@ -127,9 +138,9 @@ export const FloatingChatbot: React.FC = () => {
 
             <div className="flex items-center gap-1">
               <Link
-                href="/chat"
+                href={user ? "/chat" : "/login?redirect=/chat"}
                 className="p-1.5 rounded-lg text-[#D8C7B8] hover:text-white hover:bg-white/10 transition-colors"
-                title="Buka Layar Penuh"
+                title={user ? "Buka riwayat chat" : "Masuk untuk menyimpan riwayat"}
                 onClick={() => setIsOpen(false)}
               >
                 <Maximize2 className="w-4 h-4" />
@@ -238,6 +249,20 @@ export const FloatingChatbot: React.FC = () => {
               Suhu Closed House
             </button>
           </div>
+
+          {!user && (
+            <div className="px-3 py-1.5 bg-[#FFF8E8] border-t border-[#EADBCE] text-[10px] text-[#6B584A] text-center">
+              Chat dapat digunakan tanpa akun. Masuk untuk menyimpan riwayat melalui{" "}
+              <Link
+                href="/login?redirect=/chat"
+                className="font-bold text-[#965A2E] hover:underline"
+                onClick={() => setIsOpen(false)}
+              >
+                akun pengguna
+              </Link>
+              .
+            </div>
+          )}
 
           {/* Input Form */}
           <form
