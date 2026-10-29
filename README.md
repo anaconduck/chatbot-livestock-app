@@ -110,13 +110,6 @@ Saat mode demo aktif (`NEXT_PUBLIC_DEMO_MODE=true`), akun berikut dapat digunaka
 
 ---
 
-## Basis Data & Migrasi
-
-Skema database PostgreSQL tersedia pada direktori `supabase/`:
-- `supabase/migrations/20260930_initial_schema.sql`: Definisi tabel, relasi, indeks, dan aturan Row-Level Security (RLS).
-- `supabase/seed.sql`: Data awal dokumen dan pustaka riset peternakan.
-- `supabase/README.md`: Panduan implementasi pada dashboard Supabase.
-
 ---
 
 ## Lisensi & Penghargaan
