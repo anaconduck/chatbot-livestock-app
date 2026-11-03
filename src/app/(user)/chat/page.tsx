@@ -138,8 +138,11 @@ function ChatInner() {
           </button>
           <Logo size="sm" />
           <div className="h-4 w-[1px] bg-[#E8DCCF] hidden sm:block" />
-          <span className="text-xs font-semibold text-[#8C7B71] hidden sm:inline">
-            Ruang Diskusi & Konsultasi RAG
+          <span className="text-xs font-semibold text-[#8C7B71] hidden sm:flex items-center gap-1.5">
+            <span>Ruang Konsultasi RAG</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#DE992B]/15 text-[#966318] border border-[#DE992B]/30 font-bold uppercase">
+              Tanya AI
+            </span>
           </span>
         </div>
 
