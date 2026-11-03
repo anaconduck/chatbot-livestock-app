@@ -54,7 +54,7 @@ function LoginInner() {
       .split("; ")
       .find(
         (row) =>
-          row.startsWith("tanyaternak_role=") || row.startsWith("chickyai_role=")
+          row.startsWith("tanyapeternakan_role=") || row.startsWith("tanyaternak_role=") || row.startsWith("chickyai_role=")
       )
       ?.split("=")[1];
 
@@ -85,7 +85,7 @@ function LoginInner() {
           <div className="lg:col-span-6 bg-[#4A2D1B] p-8 sm:p-10 flex flex-col justify-between text-white relative overflow-hidden">
             <div className="space-y-4 relative z-10">
               <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#FAF7F2]">
-                Platform Riset TanyaTernak
+                Platform Riset TanyaPeternakan
               </h2>
               <p className="text-xs sm:text-sm text-[#D8C7B8] leading-relaxed max-w-md">
                 Pusat data kecerdasan buatan terpadu untuk monitoring populasi, formulasi nutrisi, dan manajemen kesehatan peternakan ayam.
@@ -105,7 +105,7 @@ function LoginInner() {
 
             <div className="text-[11px] text-[#C4B2A3] flex items-center justify-between pt-2 border-t border-white/10">
               <span>Smart Poultry Farming RAG</span>
-              <span>© 2026 TanyaTernak</span>
+              <span>© 2026 TanyaPeternakan</span>
             </div>
           </div>
 
@@ -113,7 +113,7 @@ function LoginInner() {
           <div className="lg:col-span-6 bg-[#FAF7F2]/40 p-8 sm:p-12 flex flex-col justify-center space-y-6">
             <div className="space-y-2">
               <h1 className="text-2xl sm:text-3xl font-black text-[#361D10]">
-                Masuk ke TanyaTernak
+                Masuk ke TanyaPeternakan
               </h1>
               <p className="text-xs sm:text-sm text-[#736357] leading-relaxed">
                 Akses portal operasional agribisnis, riset pakan, dan analitik produksi.

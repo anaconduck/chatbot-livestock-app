@@ -8,7 +8,7 @@ import { User, Mail, Phone, Shield, Save, CheckCircle } from "lucide-react";
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  const [name, setName] = useState(user?.full_name || "Peternak TanyaTernak");
+  const [name, setName] = useState(user?.full_name || "Peternak TanyaPeternakan");
   const [phone, setPhone] = useState(user?.phone || "081234567890");
   const [saved, setSaved] = useState(false);
 
@@ -74,7 +74,7 @@ export default function ProfilePage() {
                 <Mail className="w-4 h-4 text-[#8C7B71] absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
-                  value={user?.email || "peternak@tanyaternak.id"}
+                  value={user?.email || "peternak@tanyapeternakan.id"}
                   disabled
                   className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#F0EBE3] border border-[#E2D5C7] text-xs sm:text-sm text-[#7A6A60] cursor-not-allowed outline-none"
                 />

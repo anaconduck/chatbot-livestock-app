@@ -37,7 +37,7 @@ function ChatInner() {
       conversation_id: "c-1",
       role: "assistant",
       content:
-        "Hai 👋 Selamat datang di ChickAI Assistant!\n\nSaya asisten virtual cerdas TanyaTernak, siap membantu menjawab pertanyaan mengenai riset dan agribisnis peternakan unggas berdasarkan literatur ilmiah terverifikasi.\n\nSilakan tanyakan apa saja yang ingin Anda ketahui.",
+        "Hai 👋 Selamat datang di ChickAI Assistant!\n\nSaya asisten virtual cerdas TanyaPeternakan, siap membantu menjawab pertanyaan mengenai riset dan agribisnis peternakan unggas berdasarkan literatur ilmiah terverifikasi.\n\nSilakan tanyakan apa saja yang ingin Anda ketahui.",
       created_at: new Date().toISOString(),
     },
   ]);
@@ -118,7 +118,7 @@ function ChatInner() {
         conversation_id: newId,
         role: "assistant",
         content:
-          "Hai 👋 Selamat datang di ChickAI Assistant!\n\nSaya asisten virtual cerdas TanyaTernak, siap membantu menjawab pertanyaan mengenai peternakan ayam berdasarkan dokumen terverifikasi.\n\nSilakan tanyakan apa saja yang ingin Anda ketahui.",
+          "Hai 👋 Selamat datang di ChickAI Assistant!\n\nSaya asisten virtual cerdas TanyaPeternakan, siap membantu menjawab pertanyaan mengenai peternakan ayam berdasarkan dokumen terverifikasi.\n\nSilakan tanyakan apa saja yang ingin Anda ketahui.",
         created_at: new Date().toISOString(),
       },
     ]);

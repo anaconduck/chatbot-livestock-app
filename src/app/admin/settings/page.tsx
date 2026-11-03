@@ -26,7 +26,7 @@ export default function AdminSettingsPage() {
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-8 space-y-6">
         <div>
-          <h1 className="text-2xl font-black text-[#361D10]">Pengaturan Sistem TanyaTernak</h1>
+          <h1 className="text-2xl font-black text-[#361D10]">Pengaturan Sistem TanyaPeternakan</h1>
           <p className="text-xs text-[#7A6A60]">
             Konfigurasi koneksi Supabase, integrasi Dify RAG, dan parameter keamanan.
           </p>

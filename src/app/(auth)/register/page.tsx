@@ -90,7 +90,7 @@ export default function RegisterPage() {
         <div className="w-full max-w-2xl bg-white rounded-3xl border border-[#E8DCCF] shadow-lg p-7 sm:p-10 space-y-6">
           <div className="space-y-1">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#361D10]">
-              Daftar Akun TanyaTernak
+              Daftar Akun TanyaPeternakan
             </h1>
             <p className="text-xs text-[#7A6A60]">
               Mulai akses panduan cerdas dan dokumentasi peternakan ayam berbasis data empiris.
@@ -233,7 +233,7 @@ export default function RegisterPage() {
                 </>
               ) : (
                 <>
-                  <span>Buat Akun TanyaTernak</span>
+                  <span>Buat Akun TanyaPeternakan</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

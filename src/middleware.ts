@@ -14,6 +14,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const roleCookie =
+    request.cookies.get("tanyapeternakan_role")?.value ||
     request.cookies.get("tanyaternak_role")?.value ||
     request.cookies.get("chickyai_role")?.value;
 

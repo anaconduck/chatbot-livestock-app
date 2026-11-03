@@ -30,7 +30,7 @@ export const Logo: React.FC<LogoProps> = ({
       <div className={`relative ${iconDimensions.box} flex items-center justify-center shrink-0`}>
         <Image
           src="/images/logo/logo1.png?v=3"
-          alt="TanyaTernak Logo"
+          alt="TanyaPeternakan Logo"
           width={iconDimensions.img}
           height={iconDimensions.img}
           className="object-contain"
@@ -41,7 +41,7 @@ export const Logo: React.FC<LogoProps> = ({
 
       <div className="flex flex-col">
         <span className={`font-extrabold ${textDimensions} tracking-tight text-[#4A2D1B] leading-none`}>
-          Tanya<span className="text-[#DE992B]">Ternak</span>
+          Tanya<span className="text-[#DE992B]">Peternakan</span>
         </span>
         <span className="text-[9px] font-semibold text-[#8C7B71] tracking-widest uppercase mt-0.5">
           Agribisnis Peternakan Cerdas

@@ -13,7 +13,7 @@ const jakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "TanyaTernak",
+  title: "TanyaPeternakan",
   description:
     "Platform chatbot berbasis RAG dan repositori riset agribisnis peternakan unggas Indonesia. Didukung Program HIBAH Fakultas Peternakan Universitas Brawijaya.",
   icons: {
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     apple: "/images/logo/logo1.png?v=5",
   },
   keywords: [
-    "TanyaTernak",
+    "TanyaPeternakan",
     "Agribisnis Peternakan",
     "Fapet Universitas Brawijaya",
     "Peternakan Ayam",

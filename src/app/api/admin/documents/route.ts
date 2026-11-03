@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
     const newDoc = {
       title: body.title,
-      author: body.author || "Admin TanyaTernak",
+      author: body.author || "Admin TanyaPeternakan",
       publication_year: body.publication_year || new Date().getFullYear(),
       category: body.category || "Umum",
       description: body.description || "",

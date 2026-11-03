@@ -72,7 +72,7 @@ export default function AdminLoginPage() {
               Portal Administrator
             </h1>
             <p className="text-xs text-[#736357]">
-              Manajemen dokumen riset ilmiah, basis pengetahuan, dan akun pengguna TanyaTernak.
+              Manajemen dokumen riset ilmiah, basis pengetahuan, dan akun pengguna TanyaPeternakan.
             </p>
           </div>
 
@@ -92,7 +92,7 @@ export default function AdminLoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@tanyaternak.id"
+                  placeholder="admin@tanyapeternakan.id"
                   required
                   className="w-full pl-10 pr-3.5 py-3 rounded-xl bg-[#FAF7F2] border border-[#DFD3C5] text-xs sm:text-sm text-[#361D10] focus:border-[#4E2E1E] focus:bg-white outline-none transition-colors"
                 />

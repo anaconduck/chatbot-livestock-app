@@ -89,7 +89,7 @@ export default function AdminDashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: formattedTitle,
-          author: user?.full_name || "Admin TanyaTernak",
+          author: user?.full_name || "Admin TanyaPeternakan",
           publication_year: new Date().getFullYear(),
           category,
           description: abstractText || "Dokumen teknis terverifikasi untuk peternakan unggas.",
@@ -179,7 +179,7 @@ export default function AdminDashboardPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-extrabold text-[#361D10]">
-                  Panel Pengelola TanyaTernak
+                  Panel Pengelola TanyaPeternakan
                 </h1>
                 <span className="px-2 py-0.5 rounded-full bg-[#EAF5EA] text-[#2E7D32] border border-[#C6E6C7] text-[10px] font-bold">
                   ● SUPABASE AKTIF

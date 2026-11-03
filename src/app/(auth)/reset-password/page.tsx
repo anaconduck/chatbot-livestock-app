@@ -30,7 +30,7 @@ export default function ResetPasswordPage() {
           <div className="space-y-2">
             <h1 className="text-2xl font-black text-[#361D10]">Atur Ulang Kata Sandi</h1>
             <p className="text-xs text-[#736357]">
-              Masukkan kata sandi baru untuk akun TanyaTernak Anda.
+              Masukkan kata sandi baru untuk akun TanyaPeternakan Anda.
             </p>
           </div>
 

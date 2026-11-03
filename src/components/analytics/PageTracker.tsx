@@ -19,16 +19,16 @@ export function PageTracker() {
 
     // 2. Cek apakah pengunjung ini SUDAH dicatat dalam sesi ini
     // (Jika sudah pernah dicatat, jangan dicatat lagi walaupun dia klik halaman lain)
-    const hasBeenLoggedThisSession = sessionStorage.getItem("tanyaternak_visited_session");
+    const hasBeenLoggedThisSession = sessionStorage.getItem("tanyapeternakan_visited_session") || sessionStorage.getItem("tanyaternak_visited_session");
     if (hasBeenLoggedThisSession) {
       return;
     }
 
     // 3. Buat atau ambil Visitor ID permanen di browser ini
-    let visitorId = localStorage.getItem("tanyaternak_visitor_id");
+    let visitorId = localStorage.getItem("tanyapeternakan_visitor_id") || localStorage.getItem("tanyaternak_visitor_id");
     if (!visitorId) {
       visitorId = "vis_" + Math.random().toString(36).substring(2) + Date.now().toString(36);
-      localStorage.setItem("tanyaternak_visitor_id", visitorId);
+      localStorage.setItem("tanyapeternakan_visitor_id", visitorId);
     }
 
     // 4. Catat 1 kunjungan ke Supabase
@@ -44,7 +44,7 @@ export function PageTracker() {
         .then((res) => {
           if (res.ok) {
             // Tandai bahwa sesi kunjungan ini sudah berhasil tercatat
-            sessionStorage.setItem("tanyaternak_visited_session", "true");
+            sessionStorage.setItem("tanyapeternakan_visited_session", "true");
           }
         })
         .catch(() => {});
