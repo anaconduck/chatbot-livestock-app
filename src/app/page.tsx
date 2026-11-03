@@ -26,7 +26,7 @@ export default function HomePage() {
             <div className="lg:col-span-7 space-y-6">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#361D10] leading-[1.15] tracking-tight">
                 Konsultasi & Riset Peternakan Unggas Berbasis{" "}
-                <span className="text-[#DE992B] underline decoration-[#DE992B]/40 decoration-wavy decoration-2">
+                <span className="text-[#DE992B]">
                   Dokumen Ilmiah
                 </span>
               </h1>
