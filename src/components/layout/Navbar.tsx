@@ -172,7 +172,7 @@ export const Navbar: React.FC = () => {
                 className="flex items-center gap-2 py-2 px-3 rounded-lg text-sm font-medium text-[#4A2D1B] hover:bg-[#EADBCE]/40"
               >
                 <Bot className="w-4 h-4 text-[#DE992B]" />
-                Chatbot ChickAI Assistant
+                Chatbot ChickAI Assistant (Tanya AI)
               </Link>
             </>
           )}

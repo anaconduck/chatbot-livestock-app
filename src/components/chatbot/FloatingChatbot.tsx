@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Send, X, Maximize2, Loader2, BookOpen } from "lucide-react";
+import { Send, X, Maximize2, Loader2, BookOpen, Sparkles } from "lucide-react";
 import type { ChatMessage } from "@/types";
 
 export const FloatingChatbot: React.FC = () => {
@@ -116,7 +116,10 @@ export const FloatingChatbot: React.FC = () => {
               </div>
               <div>
                 <h4 className="font-bold text-sm leading-tight text-[#FAF7F2]">
-                  ChickAI Assistant
+                  <span>ChickAI Assistant</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#DE992B] text-[#361D10] font-black uppercase tracking-wider">
+                    Tanya AI
+                  </span>
                 </h4>
                 <p className="text-[11px] text-[#D8C7B8] flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -266,15 +269,19 @@ export const FloatingChatbot: React.FC = () => {
       {/* Floating Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="group relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-[#965A2E] to-[#54321D] p-1 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 border-2 border-[#FAF7F2]"
-        aria-label="Buka Chatbot ChickAI Assistant"
+        className="group relative flex items-center gap-2.5 pl-4 pr-1.5 py-1.5 sm:pl-4 sm:pr-2 sm:py-2 rounded-full bg-gradient-to-r from-[#4E2E1E] to-[#613619] hover:from-[#3D2214] hover:to-[#4E2B13] text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 border-2 border-[#FAF7F2]"
+        aria-label="Tanya AI - Chatbot ChickAI Assistant"
       >
-        <div className="w-full h-full rounded-xl bg-[#613619] flex items-center justify-center relative overflow-hidden">
+        <span className="flex items-center gap-1.5 font-bold text-xs sm:text-sm text-[#FAF7F2] select-none pl-1">
+          <Sparkles className="w-3.5 h-3.5 text-[#DE992B] animate-pulse" />
+          <span>Tanya AI</span>
+        </span>
+        <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#522E15] p-1 flex items-center justify-center relative overflow-hidden shrink-0 border border-[#DE992B]/40 shadow-inner">
           <Image
             src="/images/chatbot/cowboy-robot.png"
             alt="ChickAI Assistant Mascot"
-            width={38}
-            height={38}
+            width={34}
+            height={34}
             className="object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-300"
           />
         </div>
