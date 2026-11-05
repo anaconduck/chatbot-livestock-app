@@ -73,10 +73,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex flex-col bg-[#FAF7F2]">
       {/* Header */}
       <header className="w-full px-6 py-4 flex items-center justify-between border-b border-[#EADBCE]/50">
-        <div className="flex items-center gap-4">
-          <Logo />
-          <div className="h-6 w-[1px] bg-[#DCD0C1]" />
-        </div>
+        <Logo />
         <Link
           href="/login"
           className="text-xs font-semibold text-[#6C5D53] hover:text-[#4A2D1B]"

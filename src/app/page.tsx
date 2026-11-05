@@ -7,7 +7,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Reveal } from "@/components/ui/Reveal";
 import {
-  Bot,
+  BookOpen,
   ShieldCheck,
   Cpu,
   Layers,
@@ -21,7 +21,7 @@ export default function HomePage() {
 
       <main className="flex-1 w-full max-w-full overflow-x-hidden">
         {/* HERO SECTION */}
-        <section className="relative overflow-hidden pt-7 sm:pt-9 lg:pt-11 pb-8 sm:pb-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="relative overflow-hidden pt-9 sm:pt-11 lg:pt-14 pb-10 sm:pb-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
             {/* Left Copy */}
             <div className="lg:col-span-7 space-y-4 sm:space-y-5 animate-fade-up">
@@ -43,10 +43,6 @@ export default function HomePage() {
                     className="object-cover"
                     priority
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60" />
-                  <div className="absolute bottom-3 left-3 right-3 text-white text-[11px] font-semibold drop-shadow-md">
-                    Kandang Closed-House Modern Berstandar Ilmiah
-                  </div>
                 </div>
               </div>
 
@@ -58,11 +54,11 @@ export default function HomePage() {
 
               <div className="flex flex-wrap items-center gap-3.5 pt-1">
                 <Link
-                  href="/chat"
+                  href="/riset"
                   className="interactive-btn inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#4A2D1B] hover:bg-[#382112] text-white font-bold text-sm shadow-md active:scale-95"
                 >
-                  <Bot className="w-5 h-5 text-[#DE992B]" />
-                  <span>Mulai Bertanya</span>
+                  <BookOpen className="w-5 h-5 text-[#DE992B]" />
+                  <span>Eksplorasi Riset</span>
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </Link>
 
@@ -87,10 +83,6 @@ export default function HomePage() {
                   className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                   priority
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60" />
-                <div className="absolute bottom-4 left-4 right-4 text-white text-xs font-semibold drop-shadow-md">
-                  Kandang Closed-House Modern Berstandar Ilmiah
-                </div>
               </div>
             </div>
           </div>
