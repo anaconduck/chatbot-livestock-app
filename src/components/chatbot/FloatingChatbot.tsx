@@ -12,12 +12,14 @@ export const FloatingChatbot: React.FC = () => {
   const pathname = usePathname();
   const { user } = useAuth();
 
-  // Sembunyikan chatbot di halaman masuk (login), daftar (register), lupa sandi, atau reset sandi
-  const isAuthPage =
+  // Sembunyikan chatbot di halaman autentikasi, ruang chat penuh (/chat), dan panel admin (/admin)
+  const isHiddenPage =
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/forgot-password") ||
-    pathname.startsWith("/reset-password");
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/chat") ||
+    pathname.startsWith("/admin");
 
   const [isOpen, setIsOpen] = useState(false);
   const [showBubble, setShowBubble] = useState(true);
@@ -119,7 +121,7 @@ export const FloatingChatbot: React.FC = () => {
     }
   };
 
-  if (isAuthPage) {
+  if (isHiddenPage) {
     return null;
   }
 

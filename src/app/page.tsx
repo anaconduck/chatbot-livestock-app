@@ -92,10 +92,10 @@ export default function HomePage() {
         <section className="pt-10 sm:pt-12 pb-12 sm:pb-14 bg-white/70 border-y border-[#E9DDD0] overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-14">
             <Reveal>
-              <div className="text-center max-w-2xl mx-auto space-y-3">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF4EB] border border-[#F3E2CB] text-[11px] font-bold text-[#966318] uppercase tracking-wider">
-                  FITUR UTAMA TANYATERNAK
-                </div>
+              <div className="text-center max-w-2xl mx-auto space-y-2.5">
+                <span className="text-xs font-bold text-[#DE992B] uppercase tracking-widest block">
+                  Fitur Utama TanyaTernak
+                </span>
                 <h2 className="text-3xl sm:text-4xl font-extrabold text-[#361D10]">
                   Solusi Cerdas untuk Setiap Aspek Peternakan Anda
                 </h2>
@@ -152,12 +152,12 @@ export default function HomePage() {
         </section>
 
         {/* HOW IT WORKS SECTION */}
-        <section className="pt-10 sm:pt-12 pb-8 sm:pb-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-14 overflow-hidden">
+        <section className="pt-10 sm:pt-12 pb-12 sm:pb-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-14 overflow-hidden">
           <Reveal>
-            <div className="text-center max-w-2xl mx-auto space-y-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EFE8DF] border border-[#DFD3C4] text-[11px] font-bold text-[#6D4226] uppercase tracking-wider">
-                ALUR KERJA
-              </div>
+            <div className="text-center max-w-2xl mx-auto space-y-2.5">
+              <span className="text-xs font-bold text-[#DE992B] uppercase tracking-widest block">
+                Alur Kerja
+              </span>
               <h2 className="text-3xl sm:text-4xl font-extrabold text-[#361D10]">
                 Bagaimana TanyaTernak Bekerja
               </h2>
@@ -167,38 +167,50 @@ export default function HomePage() {
             </div>
           </Reveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="relative grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
+            {/* Horizontal connecting line on desktop */}
+            <div
+              aria-hidden="true"
+              className="hidden md:block absolute top-6 left-[16.66%] right-[16.66%] h-[2px] bg-gradient-to-r from-[#361D10]/25 via-[#DE992B]/50 to-[#2E7D32]/25"
+            />
+
             <Reveal delayMs={100}>
-              <div className="interactive-card bg-white rounded-3xl p-7 border border-[#E8DCCF] text-center space-y-4 h-full shadow-xs">
-                <div className="w-11 h-11 rounded-2xl bg-[#361D10] text-white font-extrabold text-base flex items-center justify-center mx-auto shadow-xs">
-                  1
+              <div className="relative flex flex-col items-center text-center space-y-3.5 px-2">
+                <div className="relative z-10 w-12 h-12 rounded-full bg-[#361D10] text-white font-extrabold text-sm tracking-wider flex items-center justify-center shadow-md ring-8 ring-[#FAF7F2]">
+                  01
                 </div>
-                <h4 className="font-bold text-base text-[#361D10]">Ketik Pertanyaan</h4>
-                <p className="text-xs text-[#6B5B51] leading-relaxed">
+                <h4 className="font-bold text-base text-[#361D10] pt-1">
+                  Ketik Pertanyaan
+                </h4>
+                <p className="text-xs sm:text-sm text-[#6B5B51] leading-relaxed max-w-xs">
                   Tulis kendala pakan, penurunan produksi, atau ventilasi kandang dalam bahasa sehari-hari.
                 </p>
               </div>
             </Reveal>
 
             <Reveal delayMs={200}>
-              <div className="interactive-card bg-white rounded-3xl p-7 border border-[#E8DCCF] text-center space-y-4 h-full shadow-xs">
-                <div className="w-11 h-11 rounded-2xl bg-[#DE992B] text-white font-extrabold text-base flex items-center justify-center mx-auto shadow-xs">
-                  2
+              <div className="relative flex flex-col items-center text-center space-y-3.5 px-2">
+                <div className="relative z-10 w-12 h-12 rounded-full bg-[#DE992B] text-white font-extrabold text-sm tracking-wider flex items-center justify-center shadow-md ring-8 ring-[#FAF7F2]">
+                  02
                 </div>
-                <h4 className="font-bold text-base text-[#361D10]">Analisis Literatur RAG</h4>
-                <p className="text-xs text-[#6B5B51] leading-relaxed">
+                <h4 className="font-bold text-base text-[#361D10] pt-1">
+                  Analisis Literatur RAG
+                </h4>
+                <p className="text-xs sm:text-sm text-[#6B5B51] leading-relaxed max-w-xs">
                   AI mencari dan mencocokkan bab relevan dari puluhan buku dan dokumen ilmiah terindeks.
                 </p>
               </div>
             </Reveal>
 
             <Reveal delayMs={300}>
-              <div className="interactive-card bg-white rounded-3xl p-7 border border-[#E8DCCF] text-center space-y-4 h-full shadow-xs">
-                <div className="w-11 h-11 rounded-2xl bg-[#2E7D32] text-white font-extrabold text-base flex items-center justify-center mx-auto shadow-xs">
-                  3
+              <div className="relative flex flex-col items-center text-center space-y-3.5 px-2">
+                <div className="relative z-10 w-12 h-12 rounded-full bg-[#2E7D32] text-white font-extrabold text-sm tracking-wider flex items-center justify-center shadow-md ring-8 ring-[#FAF7F2]">
+                  03
                 </div>
-                <h4 className="font-bold text-base text-[#361D10]">Solusi & Sumber Rujukan</h4>
-                <p className="text-xs text-[#6B5B51] leading-relaxed">
+                <h4 className="font-bold text-base text-[#361D10] pt-1">
+                  Solusi & Sumber Rujukan
+                </h4>
+                <p className="text-xs sm:text-sm text-[#6B5B51] leading-relaxed max-w-xs">
                   Terima ringkasan praktis lengkap dengan nomor halaman dan judul referensi aslinya.
                 </p>
               </div>

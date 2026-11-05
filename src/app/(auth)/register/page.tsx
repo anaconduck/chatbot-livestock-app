@@ -75,10 +75,10 @@ export default function RegisterPage() {
       <header className="w-full px-6 py-4 flex items-center justify-between border-b border-[#EADBCE]/50">
         <Logo />
         <Link
-          href="/login"
-          className="text-xs font-semibold text-[#6C5D53] hover:text-[#4A2D1B]"
+          href="/"
+          className="text-xs font-semibold text-[#6C5D53] hover:text-[#4A2D1B] transition-colors"
         >
-          Sudah terdaftar? Masuk
+          ← Kembali ke Beranda
         </Link>
       </header>
 
