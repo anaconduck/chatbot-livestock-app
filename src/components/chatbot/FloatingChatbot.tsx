@@ -313,7 +313,7 @@ export const FloatingChatbot: React.FC = () => {
             >
               <span className="text-base sm:text-lg leading-none">👋</span>
               <span>
-                Hai, butuh bantuan?
+                Tanya <strong>ChatBot</strong>
               </span>
             </button>
 
