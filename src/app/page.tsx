@@ -21,7 +21,7 @@ export default function HomePage() {
 
       <main className="flex-1 w-full max-w-full overflow-x-hidden">
         {/* HERO SECTION */}
-        <section className="relative overflow-hidden pt-4 sm:pt-6 lg:pt-8 pb-8 sm:pb-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="relative overflow-hidden pt-7 sm:pt-9 lg:pt-11 pb-8 sm:pb-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
             {/* Left Copy */}
             <div className="lg:col-span-7 space-y-4 sm:space-y-5 animate-fade-up">
@@ -76,7 +76,7 @@ export default function HomePage() {
             </div>
 
             {/* Desktop Right Hero Media */}
-            <div className="hidden lg:block lg:col-span-5 relative animate-fade-in lg:mt-3">
+            <div className="hidden lg:block lg:col-span-5 relative animate-fade-in lg:mt-2">
               <div className="hidden sm:block absolute -inset-1 bg-gradient-to-r from-[#DE992B]/20 to-[#4A2D1B]/15 rounded-3xl blur-lg opacity-60 pointer-events-none" />
               <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl aspect-4/3 group interactive-card">
                 <Image
