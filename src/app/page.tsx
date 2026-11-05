@@ -21,11 +21,11 @@ export default function HomePage() {
 
       <main className="flex-1 w-full max-w-full overflow-x-hidden">
         {/* HERO SECTION */}
-        <section className="relative overflow-hidden pt-8 sm:pt-10 lg:pt-14 pb-10 sm:pb-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+        <section className="relative overflow-hidden pt-4 sm:pt-6 lg:pt-8 pb-8 sm:pb-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
             {/* Left Copy */}
-            <div className="lg:col-span-7 space-y-6 animate-fade-up">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#361D10] leading-[1.15] tracking-tight">
+            <div className="lg:col-span-7 space-y-4 sm:space-y-5 animate-fade-up">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#361D10] leading-[1.18] tracking-tight">
                 Konsultasi & Riset Peternakan Unggas Berbasis{" "}
                 <span className="text-[#DE992B]">
                   Dokumen Ilmiah
@@ -50,16 +50,16 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <p className="text-base sm:text-lg text-[#6A5A50] leading-relaxed max-w-2xl">
+              <p className="text-sm sm:text-base text-[#6A5A50] leading-relaxed max-w-2xl">
                 Tingkatkan efisiensi pakan, kendalikan mikroklimat kandang closed-house,
                 dan perkuat biosekuriti peternakan ayam Anda bersama TanyaTernak.
                 Didukung repositori jurnal ilmiah dan panduan veteriner terverifikasi.
               </p>
 
-              <div className="flex flex-wrap items-center gap-4 pt-2">
+              <div className="flex flex-wrap items-center gap-3.5 pt-1">
                 <Link
                   href="/chat"
-                  className="interactive-btn inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-[#4A2D1B] hover:bg-[#382112] text-white font-bold text-sm shadow-md active:scale-95"
+                  className="interactive-btn inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#4A2D1B] hover:bg-[#382112] text-white font-bold text-sm shadow-md active:scale-95"
                 >
                   <Bot className="w-5 h-5 text-[#DE992B]" />
                   <span>Mulai Bertanya</span>
@@ -68,7 +68,7 @@ export default function HomePage() {
 
                 <Link
                   href="/about"
-                  className="interactive-btn inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-white border border-[#DCD0C1] hover:border-[#4A2D1B] text-[#4A2D1B] font-bold text-sm shadow-xs"
+                  className="interactive-btn inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white border border-[#DCD0C1] hover:border-[#4A2D1B] text-[#4A2D1B] font-bold text-sm shadow-xs"
                 >
                   <span>Pelajari Lebih Lanjut</span>
                 </Link>
@@ -76,7 +76,7 @@ export default function HomePage() {
             </div>
 
             {/* Desktop Right Hero Media */}
-            <div className="hidden lg:block lg:col-span-5 relative animate-fade-in lg:mt-12">
+            <div className="hidden lg:block lg:col-span-5 relative animate-fade-in lg:mt-3">
               <div className="hidden sm:block absolute -inset-1 bg-gradient-to-r from-[#DE992B]/20 to-[#4A2D1B]/15 rounded-3xl blur-lg opacity-60 pointer-events-none" />
               <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl aspect-4/3 group interactive-card">
                 <Image

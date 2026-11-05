@@ -3,12 +3,22 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Send, X, Maximize2, Loader2, BookOpen } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 import type { ChatMessage } from "@/types";
 
 export const FloatingChatbot: React.FC = () => {
+  const pathname = usePathname();
   const { user } = useAuth();
+
+  // Sembunyikan chatbot di halaman masuk (login), daftar (register), lupa sandi, atau reset sandi
+  const isAuthPage =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password");
+
   const [isOpen, setIsOpen] = useState(false);
   const [showBubble, setShowBubble] = useState(true);
   const [input, setInput] = useState("");
@@ -108,6 +118,10 @@ export const FloatingChatbot: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  if (isAuthPage) {
+    return null;
+  }
 
   return (
     <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end">
