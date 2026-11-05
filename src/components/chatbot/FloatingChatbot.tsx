@@ -178,9 +178,8 @@ export const FloatingChatbot: React.FC = () => {
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`flex gap-2.5 ${
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                }`}
+                className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"
+                  }`}
               >
                 {msg.role === "assistant" && (
                   <div className="w-7 h-7 rounded-lg bg-[#DE992B]/20 flex items-center justify-center shrink-0 border border-[#DE992B]/30 p-0.5">
@@ -195,11 +194,10 @@ export const FloatingChatbot: React.FC = () => {
                 )}
 
                 <div
-                  className={`max-w-[80%] rounded-2xl p-3 ${
-                    msg.role === "user"
+                  className={`max-w-[80%] rounded-2xl p-3 ${msg.role === "user"
                       ? "bg-[#4E2E1E] text-white rounded-br-none shadow-sm"
                       : "bg-white text-[#2C1D13] border border-[#EADBCE] rounded-bl-none shadow-xs"
-                  }`}
+                    }`}
                 >
                   <p className="whitespace-pre-line leading-relaxed">{msg.content}</p>
 
@@ -315,7 +313,7 @@ export const FloatingChatbot: React.FC = () => {
             >
               <span className="text-base sm:text-lg leading-none">👋</span>
               <span>
-                Hai, butuh bantuan? Tanya <strong>ChatBot</strong>
+                Hai, butuh bantuan?
               </span>
             </button>
 
