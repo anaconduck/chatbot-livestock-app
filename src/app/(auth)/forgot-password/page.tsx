@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
           <div className="space-y-2">
             <h1 className="text-2xl font-black text-[#361D10]">Lupa Kata Sandi?</h1>
             <p className="text-xs text-[#736357] leading-relaxed">
-              Masukkan email yang terdaftar pada akun TanyaPeternakan Anda. Kami akan mengirimkan tautan pemulihan kata sandi.
+              Masukkan email yang terdaftar pada akun TanyaTernak Anda. Kami akan mengirimkan tautan pemulihan kata sandi.
             </p>
           </div>
 

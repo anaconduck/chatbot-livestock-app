@@ -33,7 +33,7 @@ export default function HomePage() {
 
               <p className="text-base sm:text-lg text-[#6A5A50] leading-relaxed max-w-2xl">
                 Tingkatkan efisiensi pakan, kendalikan mikroklimat kandang closed-house,
-                dan perkuat biosekuriti peternakan ayam Anda bersama TanyaPeternakan.
+                dan perkuat biosekuriti peternakan ayam Anda bersama TanyaTernak.
                 Didukung repositori jurnal ilmiah dan panduan veteriner terverifikasi.
               </p>
 
@@ -75,7 +75,7 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
             <div className="text-center max-w-2xl mx-auto space-y-3">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF4EB] border border-[#F3E2CB] text-[11px] font-bold text-[#966318] uppercase">
-                FITUR UTAMA TANYAPETERNAKAN
+                FITUR UTAMA TANYATERNAK
               </div>
               <h2 className="text-3xl font-extrabold text-[#361D10]">
                 Solusi Cerdas untuk Setiap Aspek Peternakan Anda
@@ -132,7 +132,7 @@ export default function HomePage() {
               ALUR KERJA
             </div>
             <h2 className="text-3xl font-extrabold text-[#361D10]">
-              Bagaimana TanyaPeternakan Bekerja
+              Bagaimana TanyaTernak Bekerja
             </h2>
             <p className="text-sm text-[#6C5D53]">
               Tiga langkah mudah untuk mendapatkan insight ilmiah secara instan

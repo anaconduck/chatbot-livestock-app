@@ -72,7 +72,7 @@ export default function AdminDocumentsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: formattedTitle,
-          author: author || user?.full_name || "Admin TanyaPeternakan",
+          author: author || user?.full_name || "Admin TanyaTernak",
           publication_year: parseInt(year, 10) || new Date().getFullYear(),
           category,
           description: description || "Dokumen teknis terverifikasi untuk peternakan unggas.",
@@ -188,7 +188,7 @@ export default function AdminDocumentsPage() {
               Arsip & Manajemen Dokumen RAG
             </h1>
             <p className="text-xs text-[#7A6A60]">
-              Kelola status berkas riset ilmiah di database Supabase yang dijadikan referensi chatbot TanyaPeternakan.
+              Kelola status berkas riset ilmiah di database Supabase yang dijadikan referensi chatbot TanyaTernak.
             </p>
           </div>
 

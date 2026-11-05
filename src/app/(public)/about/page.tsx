@@ -31,7 +31,7 @@ export default function AboutPage() {
           </h1>
 
           <p className="text-base sm:text-lg text-[#6C5D53] max-w-3xl mx-auto leading-relaxed">
-            TanyaPeternakan adalah inisiatif berbasis sains dan kecerdasan buatan (AI) terapan yang dikembangkan oleh Fakultas Peternakan Universitas Brawijaya untuk mentransformasikan literatur ilmiah menjadi solusi nyata di lapangan.
+            TanyaTernak adalah inisiatif berbasis sains dan kecerdasan buatan (AI) terapan yang dikembangkan oleh Fakultas Peternakan Universitas Brawijaya untuk mentransformasikan literatur ilmiah menjadi solusi nyata di lapangan.
           </p>
         </section>
 
@@ -43,7 +43,7 @@ export default function AboutPage() {
                 Latar Belakang
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-[#361D10]">
-                Mengapa TanyaPeternakan Didirikan?
+                Mengapa TanyaTernak Didirikan?
               </h2>
             </div>
 
@@ -52,7 +52,7 @@ export default function AboutPage() {
                 Industri peternakan unggas nasional menghadapi berbagai dinamika kritis: fluktuasi harga dan ketersediaan bahan baku pakan, tantangan biosekuriti terhadap penyakit endemik, serta penyesuaian iklim mikro kandang tropis. Di sisi lain, perguruan tinggi dan lembaga penelitian terus memproduksi ratusan publikasi ilmiah, data empiris, dan pedoman teknis yang teruji di laboratorium.
               </p>
               <p>
-                Sayangnya, sebagian besar hasil penelitian tersebut tersimpan dalam bentuk jurnal ilmiah yang menggunakan terminologi kompleks dan sulit diakses dengan cepat oleh para peternak saat mengambil keputusan di kandang. Kesenjangan komunikasi antara laboratorium riset dan peternak rakyat menjadi alasan utama lahirnya platform <strong>TanyaPeternakan</strong>.
+                Sayangnya, sebagian besar hasil penelitian tersebut tersimpan dalam bentuk jurnal ilmiah yang menggunakan terminologi kompleks dan sulit diakses dengan cepat oleh para peternak saat mengambil keputusan di kandang. Kesenjangan komunikasi antara laboratorium riset dan peternak rakyat menjadi alasan utama lahirnya platform <strong>TanyaTernak</strong>.
               </p>
               <p>
                 Didanai melalui Program HIBAH Fakultas Peternakan Universitas Brawijaya (FAPET UB), kami merancang sistem asisten virtual cerdas berbasis <em>Retrieval-Augmented Generation</em> (RAG) yang mampu memahami pertanyaan peternak sehari-hari dan merujuk langsung ke dokumen riset ilmiah yang terverifikasi dan peer-reviewed.

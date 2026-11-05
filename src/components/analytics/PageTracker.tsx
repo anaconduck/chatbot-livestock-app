@@ -28,6 +28,7 @@ export function PageTracker() {
     let visitorId = localStorage.getItem("tanyapeternakan_visitor_id") || localStorage.getItem("tanyaternak_visitor_id");
     if (!visitorId) {
       visitorId = "vis_" + Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem("tanyaternak_visitor_id", visitorId);
       localStorage.setItem("tanyapeternakan_visitor_id", visitorId);
     }
 
@@ -44,6 +45,7 @@ export function PageTracker() {
         .then((res) => {
           if (res.ok) {
             // Tandai bahwa sesi kunjungan ini sudah berhasil tercatat
+            sessionStorage.setItem("tanyaternak_visited_session", "true");
             sessionStorage.setItem("tanyapeternakan_visited_session", "true");
           }
         })

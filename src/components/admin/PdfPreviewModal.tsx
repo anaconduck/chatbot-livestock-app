@@ -261,7 +261,7 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
         {/* Footer info bar */}
         <footer className="px-6 py-2.5 bg-[#FAF7F2] border-t border-[#E8DCCF] flex items-center justify-between text-[11px] text-[#8C7A70] shrink-0">
           <span>Tekan <kbd className="px-1.5 py-0.5 rounded bg-white border border-[#D5C7B8] font-mono text-[10px]">Esc</kbd> untuk keluar</span>
-          <span>TanyaPeternakan Repositori Ilmiah FAPET UB</span>
+          <span>TanyaTernak Repositori Ilmiah FAPET UB</span>
         </footer>
       </div>
     </div>

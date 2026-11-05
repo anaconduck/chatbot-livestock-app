@@ -7,13 +7,13 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
         {/* Left Side: 3 Logos & Grant Info */}
         <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5 text-center sm:text-left">
-          {/* 3 Logos: TanyaPeternakan, Universitas Brawijaya, Diktisaintek - Exact Matched Sizing */}
+          {/* 3 Logos: TanyaTernak, Universitas Brawijaya, Diktisaintek - Exact Matched Sizing */}
           <div className="flex items-center gap-3.5 shrink-0">
-            {/* Logo TanyaPeternakan (Tight crop: 1047x1019) */}
+            {/* Logo TanyaTernak (Tight crop: 1047x1019) */}
             <div className="w-10 h-10 sm:w-11 sm:h-11 relative flex items-center justify-center">
               <Image
                 src="/images/logo/logo1-tight.png"
-                alt="Logo TanyaPeternakan"
+                alt="Logo TanyaTernak"
                 width={44}
                 height={44}
                 className="w-full h-full object-contain"
@@ -58,7 +58,7 @@ export const Footer: React.FC = () => {
               Hilirisasi Riset Ilmiah & Kecerdasan Buatan (AI) Terapan untuk Agribisnis Peternakan
             </p>
             <p className="text-[11px] text-[#8A7A6E]">
-              © 2026 TanyaPeternakan. Didukung oleh Kemdiktisaintek & Fakultas Peternakan Universitas Brawijaya.
+              © 2026 TanyaTernak. Didukung oleh Kemdiktisaintek & Fakultas Peternakan Universitas Brawijaya.
             </p>
           </div>
         </div>

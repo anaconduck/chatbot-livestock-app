@@ -17,7 +17,7 @@ export const FloatingChatbot: React.FC = () => {
       conversation_id: "quick-chat",
       role: "assistant",
       content:
-        "Hai 👋 Selamat datang di ChickAI Assistant!\n\nSaya asisten virtual cerdas TanyaPeternakan, siap membantu menjawab pertanyaan mengenai riset, manajemen pakan, biosekuriti, dan agribisnis peternakan unggas berdasarkan literatur ilmiah terverifikasi.\n\nSilakan tanyakan apa saja yang ingin Anda ketahui.",
+        "Hai 👋 Selamat datang di ChickAI Assistant!\n\nSaya asisten virtual cerdas TanyaTernak, siap membantu menjawab pertanyaan mengenai riset, manajemen pakan, biosekuriti, dan agribisnis peternakan unggas berdasarkan literatur ilmiah terverifikasi.\n\nSilakan tanyakan apa saja yang ingin Anda ketahui.",
       created_at: new Date().toISOString(),
     },
   ]);
