@@ -9,15 +9,22 @@ import { useAuth } from "@/lib/auth/context";
 import type { ChatMessage } from "@/types";
 import {
   Send,
-  Plus,
-  MessageSquare,
+  RotateCcw,
   User as UserIcon,
+  Mail,
+  Phone,
+  ShieldCheck,
+  Sparkles,
   BookOpen,
   Loader2,
   Menu,
   X,
   ArrowLeft,
+  LogIn,
 } from "lucide-react";
+
+const MAX_GUEST_CHATS = 3;
+const GUEST_CHAT_STORAGE_KEY = "tanyaternak_guest_chat_count";
 
 function ChatInner() {
   const searchParams = useSearchParams();
@@ -25,11 +32,8 @@ function ChatInner() {
   const { user } = useAuth();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [conversations, setConversations] = useState([
-    { id: "c-1", title: "Keseimbangan Asam Amino Pakan", active: true },
-    { id: "c-2", title: "Ventilasi Closed House & Gas Amonia", active: false },
-    { id: "c-3", title: "Mitigasi Penyakit Newcastle Disease", active: false },
-  ]);
+  const [guestChatCount, setGuestChatCount] = useState(0);
+  const [conversationId, setConversationId] = useState<string>("c-1");
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -47,16 +51,61 @@ function ChatInner() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedCount = parseInt(
+        localStorage.getItem(GUEST_CHAT_STORAGE_KEY) || "0",
+        10
+      );
+      if (!isNaN(savedCount) && savedCount > 0) {
+        setGuestChatCount(savedCount);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
+
+  const isGuestLimitReached = !user && guestChatCount >= MAX_GUEST_CHATS;
 
   const handleSendMessage = async (textToSend?: string) => {
     const text = (textToSend || input).trim();
     if (!text || isLoading) return;
 
+    if (!user && guestChatCount >= MAX_GUEST_CHATS) {
+      setInput("");
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `user-${Date.now()}`,
+          conversation_id: conversationId,
+          role: "user",
+          content: text,
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: `limit-${Date.now()}`,
+          conversation_id: conversationId,
+          role: "assistant",
+          content:
+            "Anda telah mencapai batas maksimal 3 kali chat tanpa login. Silakan masuk (login) sebagai pengguna untuk melanjutkan pertanyaan ke-4 dan berkonsultasi tanpa batas.",
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      return;
+    }
+
+    if (!user) {
+      const nextCount = guestChatCount + 1;
+      setGuestChatCount(nextCount);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(GUEST_CHAT_STORAGE_KEY, nextCount.toString());
+      }
+    }
+
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
-      conversation_id: "c-1",
+      conversation_id: conversationId,
       role: "user",
       content: text,
       created_at: new Date().toISOString(),
@@ -72,16 +121,20 @@ function ChatInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: text,
-          conversation_id: "c-1",
+          conversation_id: conversationId,
           user: user?.id || "peternak_demo",
         }),
       });
 
       const data = await res.json();
 
+      if (data.conversation_id) {
+        setConversationId(data.conversation_id);
+      }
+
       const aiMessage: ChatMessage = {
         id: `ai-${Date.now()}`,
-        conversation_id: "c-1",
+        conversation_id: data.conversation_id || conversationId,
         role: "assistant",
         content: data.answer || "Maaf, belum dapat menghasilkan respon.",
         sources: data.sources || [],
@@ -94,7 +147,7 @@ function ChatInner() {
         ...prev,
         {
           id: `ai-${Date.now()}`,
-          conversation_id: "c-1",
+          conversation_id: conversationId,
           role: "assistant",
           content:
             "Terjadi kendala koneksi ke server. Mohon pastikan koneksi backend aktif.",
@@ -106,12 +159,9 @@ function ChatInner() {
     }
   };
 
-  const handleNewChat = () => {
+  const handleResetChat = () => {
     const newId = `c-${Date.now()}`;
-    setConversations([
-      { id: newId, title: "Percakapan Baru", active: true },
-      ...conversations.map((c) => ({ ...c, active: false })),
-    ]);
+    setConversationId(newId);
     setMessages([
       {
         id: `greeting-${newId}`,
@@ -139,7 +189,7 @@ function ChatInner() {
           <Logo size="sm" />
           <div className="h-4 w-[1px] bg-[#E8DCCF] hidden sm:block" />
           <span className="text-xs font-semibold text-[#8C7B71] hidden sm:flex items-center gap-1.5">
-            <span>Ruang Konsultasi RAG</span>
+            <span>Ruang Konsultasi AI</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#DE992B]/15 text-[#966318] border border-[#DE992B]/30 font-bold uppercase">
               Tanya AI
             </span>
@@ -148,76 +198,126 @@ function ChatInner() {
 
         <div className="flex items-center gap-3">
           <Link
-            href="/dashboard"
+            href="/"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E2D5C7] text-xs font-semibold text-[#5A483E] hover:border-[#4A2D1B] transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Kembali ke</span> Dashboard
+            <span className="hidden sm:inline">Kembali ke</span> Beranda
           </Link>
         </div>
       </header>
 
-      {/* Main Layout: Sidebar + Chat Panel */}
+      {/* Main Layout: User Registration Info Sidebar + Chat Panel */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* Sidebar */}
+        {/* Sidebar: Informasi Pendaftaran Pengguna (Pengganti Riwayat Obrolan) */}
         <aside
           className={`fixed md:static inset-y-0 left-0 z-30 w-72 bg-[#FAF7F2] border-r border-[#E8DCCF] flex flex-col transition-transform duration-300 md:translate-x-0 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          <div className="p-4">
+          <div className="p-4 border-b border-[#E8DCCF]">
             <button
               onClick={() => {
-                handleNewChat();
+                handleResetChat();
                 setSidebarOpen(false);
               }}
               className="w-full py-2.5 px-4 rounded-xl bg-[#4A2D1B] hover:bg-[#382112] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all active:scale-95"
             >
-              <Plus className="w-4 h-4 text-[#DE992B]" />
-              <span>Percakapan Baru</span>
+              <RotateCcw className="w-4 h-4 text-[#DE992B]" />
+              <span>Mulai Obrolan Baru</span>
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-3 space-y-1.5 text-xs">
-            <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#8C7A70]">
-              Riwayat Obrolan
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[#8C7A70]">
+              Informasi Akun Pendaftaran
             </div>
-            {conversations.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => {
-                  setConversations(
-                    conversations.map((item) => ({
-                      ...item,
-                      active: item.id === c.id,
-                    }))
-                  );
-                  setSidebarOpen(false);
-                }}
-                className={`w-full text-left p-2.5 rounded-xl flex items-center gap-2.5 transition-colors ${
-                  c.active
-                    ? "bg-white text-[#361D10] font-bold border border-[#E8DCCF] shadow-xs"
-                    : "text-[#6A5A50] hover:bg-white/60 font-medium"
-                }`}
-              >
-                <MessageSquare className="w-4 h-4 text-[#DE992B] shrink-0" />
-                <span className="truncate flex-1">{c.title}</span>
-              </button>
-            ))}
-          </div>
 
-          <div className="p-4 border-t border-[#E8DCCF] bg-white/70">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-[#FAF4EB] border border-[#DE992B]/50 flex items-center justify-center text-xs font-bold text-[#4A2D1B]">
-                {user?.full_name?.charAt(0) || "U"}
+            {user ? (
+              <div className="space-y-3">
+                <div className="bg-white rounded-2xl p-3.5 border border-[#E8DCCF] shadow-2xs space-y-3">
+                  <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#F1E8DF]">
+                    <div className="w-9 h-9 rounded-xl bg-[#FAF4EB] border border-[#DE992B]/50 flex items-center justify-center text-sm font-black text-[#4A2D1B] shrink-0">
+                      {user.full_name?.charAt(0)?.toUpperCase() || "U"}
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="text-xs font-bold text-[#361D10] truncate">
+                        {user.full_name}
+                      </p>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#2E7D32]">
+                        <ShieldCheck className="w-3 h-3" />
+                        Pengguna Terdaftar
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <div>
+                      <span className="text-[10px] font-semibold text-[#8C7B71] flex items-center gap-1">
+                        <UserIcon className="w-3 h-3 text-[#DE992B]" />
+                        Nama Lengkap
+                      </span>
+                      <p className="text-xs font-bold text-[#361D10] mt-0.5 break-words">
+                        {user.full_name}
+                      </p>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-semibold text-[#8C7B71] flex items-center gap-1">
+                        <Mail className="w-3 h-3 text-[#DE992B]" />
+                        Email Terdaftar
+                      </span>
+                      <p className="text-xs font-bold text-[#361D10] mt-0.5 break-all">
+                        {user.email}
+                      </p>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-semibold text-[#8C7B71] flex items-center gap-1">
+                        <Phone className="w-3 h-3 text-[#DE992B]" />
+                        No. WhatsApp / Telepon
+                      </span>
+                      <p className="text-xs font-bold text-[#361D10] mt-0.5">
+                        {user.phone || "Belum dilengkapi"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-[#FFF8EE] border border-[#F3E2CB] rounded-2xl p-3.5 space-y-1.5">
+                  <div className="font-bold text-[#8C5D19] flex items-center gap-1.5 text-xs">
+                    <Sparkles className="w-3.5 h-3.5 text-[#DE992B]" />
+                    <span>Akses Chat Tanpa Batas</span>
+                  </div>
+                  <p className="text-[11px] text-[#6B5B51] leading-relaxed">
+                    Sebagai pengguna yang telah login, Anda bebas berkonsultasi lebih dari 3 kali tanpa batas kuota.
+                  </p>
+                </div>
+
+                <Link
+                  href="/profile"
+                  className="block w-full text-center py-2 px-3 rounded-xl bg-white border border-[#E2D5C7] hover:border-[#4A2D1B] text-[#4A2D1B] font-semibold text-xs transition-colors"
+                >
+                  Kelola Profil Pendaftaran
+                </Link>
               </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-bold text-[#361D10] truncate">
-                  {user?.full_name || "Peternak"}
+            ) : (
+              <div className="bg-white rounded-2xl p-4 border border-[#E8DCCF] shadow-2xs space-y-3">
+                <p className="font-bold text-[#361D10] text-xs">
+                  Status: Pengunjung Tamu
                 </p>
-                <p className="text-[10px] text-[#8C7B71] truncate">{user?.email}</p>
+                <p className="text-[11px] text-[#6B5B51] leading-relaxed">
+                  Pengunjung tanpa login memiliki kuota maksimal <strong>3 kali chat</strong> ({Math.min(guestChatCount, MAX_GUEST_CHATS)}/{MAX_GUEST_CHATS} terpakai). Masuk sebagai pengguna untuk chat ke-4 dan seterusnya tanpa batas.
+                </p>
+                <Link
+                  href="/login?redirect=/chat"
+                  className="w-full py-2 px-3 rounded-xl bg-[#4A2D1B] text-white font-bold text-xs flex items-center justify-center gap-1.5"
+                >
+                  <LogIn className="w-3.5 h-3.5 text-[#DE992B]" />
+                  <span>Masuk Sebagai Pengguna</span>
+                </Link>
               </div>
-            </div>
+            )}
           </div>
         </aside>
 
@@ -308,7 +408,7 @@ function ChatInner() {
                   </div>
                   <div className="bg-[#FAF7F2] border border-[#E8DCCF] rounded-3xl rounded-bl-sm p-4 text-xs text-[#6A5A50] flex items-center gap-2.5">
                     <Loader2 className="w-4 h-4 animate-spin text-[#DE992B]" />
-                    <span>ChickAI sedang membaca indeks dokumen riset peternakan...</span>
+                    <span>ChickAI sedang memproses jawaban...</span>
                   </div>
                 </div>
               )}
@@ -317,31 +417,50 @@ function ChatInner() {
             </div>
           </div>
 
-          <div className="px-4 py-2 bg-[#FAF7F2] border-t border-[#E8DCCF] overflow-x-auto no-scrollbar">
-            <div className="max-w-3xl mx-auto flex items-center gap-2 text-xs">
-              <span className="text-[#8C7B71] text-[11px] font-semibold shrink-0">
-                Saran Pertanyaan:
-              </span>
-              <button
-                onClick={() => handleSendMessage("Berapa takaran kalsium pakan ayam layer fase puncak?")}
-                className="px-3 py-1 rounded-full bg-white border border-[#E2D5C7] text-[#4A2D1B] whitespace-nowrap hover:border-[#DE992B] transition-colors"
-              >
-                🌾 Kalsium Layer
-              </button>
-              <button
-                onClick={() => handleSendMessage("Bagaimana mitigasi penyakit ND dan AI di kandang?")}
-                className="px-3 py-1 rounded-full bg-white border border-[#E2D5C7] text-[#4A2D1B] whitespace-nowrap hover:border-[#DE992B] transition-colors"
-              >
-                🛡️ Biosekuriti 3 Zona
-              </button>
-              <button
-                onClick={() => handleSendMessage("Suhu dan kelembaban ideal kandang closed-house?")}
-                className="px-3 py-1 rounded-full bg-white border border-[#E2D5C7] text-[#4A2D1B] whitespace-nowrap hover:border-[#DE992B] transition-colors"
-              >
-                🌡️ Suhu Closed-House
-              </button>
+          {!isGuestLimitReached && (
+            <div className="px-4 py-2 bg-[#FAF7F2] border-t border-[#E8DCCF] overflow-x-auto no-scrollbar">
+              <div className="max-w-3xl mx-auto flex items-center gap-2 text-xs">
+                <span className="text-[#8C7B71] text-[11px] font-semibold shrink-0">
+                  Saran Pertanyaan:
+                </span>
+                <button
+                  onClick={() => handleSendMessage("Berapa takaran kalsium pakan ayam layer fase puncak?")}
+                  className="px-3 py-1 rounded-full bg-white border border-[#E2D5C7] text-[#4A2D1B] whitespace-nowrap hover:border-[#DE992B] transition-colors"
+                >
+                  🌾 Kalsium Layer
+                </button>
+                <button
+                  onClick={() => handleSendMessage("Bagaimana mitigasi penyakit ND dan AI di kandang?")}
+                  className="px-3 py-1 rounded-full bg-white border border-[#E2D5C7] text-[#4A2D1B] whitespace-nowrap hover:border-[#DE992B] transition-colors"
+                >
+                  🛡️ Biosekuriti 3 Zona
+                </button>
+                <button
+                  onClick={() => handleSendMessage("Suhu dan kelembaban ideal kandang closed-house?")}
+                  className="px-3 py-1 rounded-full bg-white border border-[#E2D5C7] text-[#4A2D1B] whitespace-nowrap hover:border-[#DE992B] transition-colors"
+                >
+                  🌡️ Suhu Closed-House
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+
+          {isGuestLimitReached && (
+            <div className="px-4 py-3 bg-[#FFF3E0] border-t border-[#E8DCCF]">
+              <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <span className="font-semibold text-[#361D10]">
+                  Kuota 3x chat tamu telah habis. Silakan login sebagai pengguna untuk melanjutkan chat ke-4 dan seterusnya.
+                </span>
+                <Link
+                  href="/login?redirect=/chat"
+                  className="px-4 py-2 rounded-xl bg-[#4A2D1B] text-white font-bold flex items-center gap-1.5 shrink-0"
+                >
+                  <LogIn className="w-3.5 h-3.5 text-[#DE992B]" />
+                  <span>Masuk Sebagai Pengguna</span>
+                </Link>
+              </div>
+            </div>
+          )}
 
           <div className="p-4 bg-white border-t border-[#E8DCCF]">
             <form

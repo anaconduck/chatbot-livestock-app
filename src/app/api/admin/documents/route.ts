@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminRole } from "@/server/authorization";
-import { MOCK_DOCUMENTS } from "@/lib/mock-data";
+import type { ContentType } from "@/types";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE !== "false";
-
   try {
     await requireAdminRole();
   } catch {
@@ -23,13 +23,13 @@ export async function GET() {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      return NextResponse.json({ documents: data });
+      return NextResponse.json({ documents: data, fromSupabase: true });
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error fetching documents:", err);
   }
 
-  return NextResponse.json({ documents: isDemo ? MOCK_DOCUMENTS : [] });
+  return NextResponse.json({ documents: [], fromSupabase: false });
 }
 
 export async function POST(req: Request) {
@@ -47,41 +47,80 @@ export async function POST(req: Request) {
 
     if (!body.title || typeof body.title !== "string" || !body.title.trim()) {
       return NextResponse.json(
-        { error: "Judul dokumen wajib diisi." },
+        { error: "Judul konten wajib diisi." },
         { status: 400 }
       );
     }
 
-    const adminClient = createAdminClient();
+    const contentType: ContentType =
+      body.content_type === "FUN_FACT" ? "FUN_FACT" : "JURNAL";
 
-    const newDoc = {
-      title: body.title.trim(),
-      author: body.author || "Admin TanyaTernak",
-      publication_year: body.publication_year || new Date().getFullYear(),
-      category: body.category || "Umum",
-      description: body.description || "",
-      original_filename: body.original_filename || body.title,
-      status: "READY",
-      file_size_bytes: body.file_size_bytes || 2.5 * 1024 * 1024,
-      download_count: 0,
-    };
-
-    const { data, error } = await adminClient
-      .from("documents")
-      .insert([newDoc])
-      .select()
-      .single();
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+    if (
+      contentType === "JURNAL" &&
+      (!body.source_url ||
+        typeof body.source_url !== "string" ||
+        !body.source_url.trim())
+    ) {
+      return NextResponse.json(
+        { error: "Link jurnal ilmiah wajib diisi." },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ document: data, success: true });
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err?.message || "Gagal menyimpan dokumen." },
-      { status: 500 }
-    );
+    const nowIso = new Date().toISOString();
+    const newDoc = {
+      content_type: contentType,
+      title: body.title.trim(),
+      category: body.category || "Nutrisi & Pakan",
+      description:
+        body.description?.trim() ||
+        "Konten riset dan edukasi peternakan unggas TanyaTernak.",
+      author:
+        contentType === "JURNAL"
+          ? body.author?.trim() || "Tim Riset TanyaTernak"
+          : null,
+      source_url:
+        contentType === "JURNAL" && body.source_url
+          ? body.source_url.trim()
+          : null,
+      image_url:
+        contentType === "FUN_FACT" && body.image_url
+          ? body.image_url
+          : null,
+    };
+
+    try {
+      const adminClient = createAdminClient();
+      const { data, error } = await adminClient
+        .from("documents")
+        .insert([newDoc])
+        .select()
+        .single();
+
+      if (!error && data) {
+        return NextResponse.json({ document: data, success: true });
+      }
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+      }
+    } catch {
+      // Fallback for offline/demo environment
+    }
+
+    return NextResponse.json({
+      document: {
+        id: `doc-${Date.now()}`,
+        ...newDoc,
+        created_at: nowIso,
+        updated_at: nowIso,
+      },
+      success: true,
+    });
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : "Gagal menyimpan konten.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -100,21 +139,30 @@ export async function DELETE(req: Request) {
     const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json({ error: "Document ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "ID konten wajib diisi." },
+        { status: 400 }
+      );
     }
 
-    const adminClient = createAdminClient();
-    const { error } = await adminClient.from("documents").delete().eq("id", id);
+    try {
+      const adminClient = createAdminClient();
+      const { error } = await adminClient
+        .from("documents")
+        .delete()
+        .eq("id", id);
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+      }
+    } catch {
+      // Fallback if local document
     }
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err?.message || "Gagal menghapus dokumen." },
-      { status: 500 }
-    );
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : "Gagal menghapus konten.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

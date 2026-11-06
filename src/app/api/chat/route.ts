@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { sendChatMessage } from "@/lib/dify/chat";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const MAX_QUERY_LENGTH = 1000;
@@ -20,99 +19,17 @@ const ANONYMOUS_CHAT_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 interface ChatIdentity {
   difyUserId: string;
   authenticated: boolean;
-  databaseUserId?: string;
-}
-
-interface ChatExchange {
-  userId: string;
-  query: string;
-  answer: string;
-  difyConversationId: string;
-  difyMessageId: string;
-}
-
-async function persistChatExchange(exchange: ChatExchange): Promise<void> {
-  const adminClient = createAdminClient();
-  const { data: existingConversation, error: findError } = await adminClient
-    .from("conversations")
-    .select("id")
-    .eq("user_id", exchange.userId)
-    .eq("dify_conversation_id", exchange.difyConversationId)
-    .maybeSingle();
-
-  if (findError) {
-    throw new Error(`Gagal mencari riwayat percakapan: ${findError.message}`);
-  }
-
-  let conversationId = existingConversation?.id as string | undefined;
-
-  if (!conversationId) {
-    const title =
-      exchange.query.length > 80
-        ? `${exchange.query.slice(0, 77)}...`
-        : exchange.query;
-    const { data: createdConversation, error: createError } = await adminClient
-      .from("conversations")
-      .insert({
-        user_id: exchange.userId,
-        title,
-        dify_conversation_id: exchange.difyConversationId,
-      })
-      .select("id")
-      .single();
-
-    if (createError || !createdConversation) {
-      throw new Error(
-        `Gagal membuat riwayat percakapan: ${createError?.message || "Data tidak tersedia."}`
-      );
-    }
-
-    conversationId = createdConversation.id as string;
-  }
-
-  const { error: messagesError } = await adminClient.from("messages").insert([
-    {
-      conversation_id: conversationId,
-      role: "user",
-      content: exchange.query,
-    },
-    {
-      conversation_id: conversationId,
-      role: "assistant",
-      content: exchange.answer,
-      dify_message_id: exchange.difyMessageId,
-    },
-  ]);
-
-  if (messagesError) {
-    throw new Error(`Gagal menyimpan pesan: ${messagesError.message}`);
-  }
-
-  const { error: updateError } = await adminClient
-    .from("conversations")
-    .update({ updated_at: new Date().toISOString() })
-    .eq("id", conversationId);
-
-  if (updateError) {
-    throw new Error(`Gagal memperbarui percakapan: ${updateError.message}`);
-  }
 }
 
 async function getChatIdentity(): Promise<ChatIdentity> {
   const cookieStore = await cookies();
-  const isDevelopmentDemo =
-    process.env.NODE_ENV !== "production" &&
-    process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+  const roleCookie = cookieStore.get("tanyaternak_role")?.value;
 
-  if (isDevelopmentDemo) {
-    const demoRole = cookieStore.get("tanyaternak_role")?.value;
-
-    if (demoRole === "USER" || demoRole === "ADMIN") {
-      return {
-        difyUserId: `demo-${demoRole.toLowerCase()}`,
-        authenticated: true,
-      };
-    }
+  if (roleCookie === "USER" || roleCookie === "ADMIN") {
+    return {
+      difyUserId: `user-${roleCookie.toLowerCase()}`,
+      authenticated: true,
+    };
   }
 
   try {
@@ -123,19 +40,10 @@ async function getChatIdentity(): Promise<ChatIdentity> {
     } = await supabase.auth.getUser();
 
     if (!authError && user) {
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("is_active")
-        .eq("id", user.id)
-        .single();
-
-      if (!profileError && profile?.is_active) {
-        return {
-          difyUserId: user.id,
-          authenticated: true,
-          databaseUserId: user.id,
-        };
-      }
+      return {
+        difyUserId: user.id,
+        authenticated: true,
+      };
     }
   } catch {
     // Chat remains available as an anonymous session if auth is unavailable.
@@ -210,26 +118,9 @@ export async function POST(req: NextRequest) {
       user: identity.difyUserId,
     });
 
-    let historySaved = false;
-
-    if (identity.databaseUserId) {
-      try {
-        await persistChatExchange({
-          userId: identity.databaseUserId,
-          query: parsedBody.data.query,
-          answer: response.answer,
-          difyConversationId: response.conversation_id,
-          difyMessageId: response.message_id,
-        });
-        historySaved = true;
-      } catch (historyError: unknown) {
-        console.error("Error saving chat history:", historyError);
-      }
-    }
-
     return NextResponse.json({
       ...response,
-      history_saved: historySaved,
+      authenticated: identity.authenticated,
     });
   } catch (error: unknown) {
     console.error("Error processing chat request:", error);

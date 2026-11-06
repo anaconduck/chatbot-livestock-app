@@ -114,14 +114,14 @@ export default function AdminUsersPage() {
             className="px-4 py-2.5 text-[#6E5D52] hover:text-[#4A2D1B] flex items-center gap-2 whitespace-nowrap"
           >
             <Layers className="w-4 h-4" />
-            Ringkasan & Upload Riset
+            Upload Konten [Riset & Edukasi]
           </Link>
           <Link
             href="/admin/documents"
             className="px-4 py-2.5 text-[#6E5D52] hover:text-[#4A2D1B] flex items-center gap-2 whitespace-nowrap"
           >
             <FileText className="w-4 h-4" />
-            Repositori Dokumen
+            Daftar Dokumen Riset & Edukasi
           </Link>
           <Link
             href="/admin/users"
@@ -129,13 +129,6 @@ export default function AdminUsersPage() {
           >
             <Users className="w-4 h-4 text-[#DE992B]" />
             Manajemen Pengguna ({users.length})
-          </Link>
-          <Link
-            href="/admin/conversations"
-            className="px-4 py-2.5 text-[#6E5D52] hover:text-[#4A2D1B] flex items-center gap-2 whitespace-nowrap"
-          >
-            <MessageSquare className="w-4 h-4" />
-            Percakapan Pengguna
           </Link>
         </div>
       </div>

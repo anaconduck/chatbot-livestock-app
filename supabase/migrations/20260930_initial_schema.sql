@@ -46,30 +46,22 @@ CREATE TABLE IF NOT EXISTS public.messages (
 CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON public.messages(conversation_id);
 CREATE INDEX IF NOT EXISTS idx_messages_created_at ON public.messages(created_at ASC);
 
--- 4. DOCUMENTS (KNOWLEDGE BASE) TABLE
+-- 4. DOCUMENTS (KONTEN RISET & EDUKASI: FUN FACT & JURNAL ILMIAH) TABLE
 CREATE TABLE IF NOT EXISTS public.documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    content_type TEXT NOT NULL CHECK (content_type IN ('FUN_FACT', 'JURNAL')) DEFAULT 'JURNAL',
     title TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'Nutrisi & Pakan',
+    description TEXT NOT NULL,
     author TEXT,
-    publication_year INTEGER,
-    category TEXT,
-    description TEXT,
-    original_filename TEXT,
-    storage_path TEXT,
-    dify_document_id TEXT,
-    dify_batch_id TEXT,
-    status TEXT NOT NULL CHECK (
-        status IN ('UPLOADED', 'QUEUED', 'SENDING_TO_DIFY', 'INDEXING', 'READY', 'FAILED')
-    ) DEFAULT 'UPLOADED',
-    uploaded_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
-    file_size_bytes BIGINT DEFAULT 0,
-    download_count INTEGER DEFAULT 0,
+    source_url TEXT,
+    image_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_documents_content_type ON public.documents(content_type);
 CREATE INDEX IF NOT EXISTS idx_documents_category ON public.documents(category);
-CREATE INDEX IF NOT EXISTS idx_documents_status ON public.documents(status);
 CREATE INDEX IF NOT EXISTS idx_documents_created_at ON public.documents(created_at DESC);
 
 -- ====================================================================
@@ -176,10 +168,10 @@ CREATE POLICY "Users can view and add messages to own conversations"
     );
 
 -- DOCUMENTS POLICIES
--- Anyone can view ready documents
-CREATE POLICY "Anyone can view ready documents"
+-- Anyone can view documents in Riset & Edukasi
+CREATE POLICY "Anyone can view documents"
     ON public.documents FOR SELECT
-    USING (status = 'READY' OR public.is_admin());
+    USING (true);
 
 -- Only admins can insert, update, delete documents
 CREATE POLICY "Admins can manage documents"

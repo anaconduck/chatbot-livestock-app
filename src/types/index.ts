@@ -12,29 +12,17 @@ export interface Profile {
   updated_at: string;
 }
 
-export type DocumentStatus =
-  | "UPLOADED"
-  | "QUEUED"
-  | "SENDING_TO_DIFY"
-  | "INDEXING"
-  | "READY"
-  | "FAILED";
+export type ContentType = "FUN_FACT" | "JURNAL";
 
 export interface KnowledgeDocument {
   id: string;
+  content_type: ContentType;
   title: string;
-  author?: string | null;
-  publication_year?: number | null;
   category: string;
-  description?: string | null;
-  original_filename: string;
-  storage_path?: string | null;
-  dify_document_id?: string | null;
-  dify_batch_id?: string | null;
-  status: DocumentStatus;
-  uploaded_by?: string | null;
-  file_size_bytes?: number;
-  download_count?: number;
+  description: string;
+  author?: string | null;
+  source_url?: string | null;
+  image_url?: string | null;
   created_at: string;
   updated_at: string;
 }

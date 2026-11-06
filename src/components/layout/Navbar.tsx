@@ -10,11 +10,10 @@ import {
   X,
   LogOut,
   ShieldCheck,
-  Bot,
-  LayoutDashboard,
   BookOpen,
   Home,
   Info,
+  User,
 } from "lucide-react";
 
 export const Navbar: React.FC = () => {
@@ -85,16 +84,21 @@ export const Navbar: React.FC = () => {
                   </Link>
                 )}
                 <Link
-                  href="/dashboard"
-                  className="text-right group hover:opacity-85 transition-opacity"
-                  title="Buka Dashboard"
+                  href="/profile"
+                  className="text-right group hover:opacity-85 transition-opacity flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-[#EADBCE]/40"
+                  title="Informasi Akun Pengguna"
                 >
-                  <p className="text-xs font-bold text-[#4A2D1B] group-hover:text-[#DE992B] transition-colors">
-                    {user.full_name}
-                  </p>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-[#EADBCE] text-[#5A3825]">
-                    {user.role}
-                  </span>
+                  <div className="w-7 h-7 rounded-full bg-[#EADBCE] text-[#4A2D1B] flex items-center justify-center font-bold text-xs">
+                    {user.full_name?.charAt(0)?.toUpperCase() || <User className="w-3.5 h-3.5" />}
+                  </div>
+                  <div className="text-left">
+                    <p className="text-xs font-bold text-[#4A2D1B] group-hover:text-[#DE992B] transition-colors leading-tight">
+                      {user.full_name}
+                    </p>
+                    <span className="text-[10px] font-semibold text-[#7A6B62]">
+                      Informasi Akun
+                    </span>
+                  </div>
                 </Link>
                 <button
                   onClick={() => logout()}
@@ -137,7 +141,7 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-[#EADBCE] bg-[#FAF7F2] px-4 pt-3 pb-6 space-y-3 animate-fade-in shadow-lg">
+        <div className="md:hidden border-t border-[#EADBCE] bg-[#FAF7F2] px-4 pt-3 pb-6 space-y-2.5 animate-fade-in shadow-lg">
           <Link
             href="/"
             onClick={() => setMobileMenuOpen(false)}
@@ -155,27 +159,6 @@ export const Navbar: React.FC = () => {
             <BookOpen className="w-4 h-4 text-[#DE992B]" />
             Riset & Edukasi
           </Link>
-
-          {user && (
-            <>
-              <Link
-                href="/dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2 py-2 px-3 rounded-lg text-sm font-medium text-[#4A2D1B] hover:bg-[#EADBCE]/40"
-              >
-                <LayoutDashboard className="w-4 h-4 text-[#DE992B]" />
-                Dashboard Peternak
-              </Link>
-              <Link
-                href="/chat"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2 py-2 px-3 rounded-lg text-sm font-medium text-[#4A2D1B] hover:bg-[#EADBCE]/40"
-              >
-                <Bot className="w-4 h-4 text-[#DE992B]" />
-                Chatbot ChickAI Assistant (Tanya AI)
-              </Link>
-            </>
-          )}
 
           {role === "ADMIN" && (
             <Link
@@ -201,11 +184,19 @@ export const Navbar: React.FC = () => {
             {user ? (
               <div className="space-y-3">
                 <Link
-                  href="/dashboard"
+                  href="/profile"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block text-xs text-[#7A6B62] hover:text-[#4A2D1B]"
+                  className="flex items-center gap-2.5 py-2 px-3 rounded-xl bg-white border border-[#E8DCCF] text-xs text-[#4A2D1B] hover:border-[#DE992B] transition-colors"
                 >
-                  Login sebagai: <span className="font-bold text-[#4A2D1B] underline decoration-[#DE992B]/50">{user.full_name}</span> ({user.role})
+                  <div className="w-7 h-7 rounded-full bg-[#FAF4EB] border border-[#DE992B]/40 flex items-center justify-center font-bold text-xs text-[#4A2D1B] shrink-0">
+                    {user.full_name?.charAt(0)?.toUpperCase() || "U"}
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="font-bold text-[#361D10] truncate">{user.full_name}</p>
+                    <p className="text-[11px] text-[#7A6B62] truncate">
+                      {user.email} • Lihat Informasi Akun
+                    </p>
+                  </div>
                 </Link>
                 <button
                   onClick={() => {

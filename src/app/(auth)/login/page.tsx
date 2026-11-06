@@ -18,7 +18,7 @@ import {
 function LoginInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect") || "/dashboard";
+  const redirectUrl = searchParams.get("redirect") || "/";
 
   const { login } = useAuth();
 

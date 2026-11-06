@@ -63,9 +63,9 @@ export default function RegisterPage() {
       return;
     }
 
-    setSuccessMessage("Pendaftaran berhasil! Mengalihkan ke dashboard...");
+    setSuccessMessage("Pendaftaran berhasil! Mengalihkan ke informasi akun...");
     setTimeout(() => {
-      router.push("/dashboard");
+      router.push("/profile");
     }, 1200);
   };
 

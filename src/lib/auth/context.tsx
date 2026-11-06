@@ -12,6 +12,7 @@ interface AuthContextType {
   isDemo: boolean;
   login: (email: string, pass: string, targetRole?: UserRole) => Promise<{ success: boolean; error?: string; role?: UserRole }>;
   register: (data: { full_name: string; email: string; phone: string; password: string }) => Promise<{ success: boolean; error?: string }>;
+  updateProfile: (data: { full_name: string; phone: string }) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -252,24 +253,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Allow demo registration simulation
     }
 
-    if (isDemo) {
-      const newProfile: Profile = {
-        id: `user-${Date.now()}`,
-        email: data.email,
-        full_name: data.full_name,
-        role: "USER", // ALWAYS USER
-        phone: data.phone,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setUser(newProfile);
-      localStorage.setItem("tanyaternak_demo_user", JSON.stringify(newProfile));
-      document.cookie = `tanyaternak_role=USER; path=/; max-age=86400; SameSite=Lax`;
-    }
+    const newProfile: Profile = {
+      id: `user-${Date.now()}`,
+      email: data.email,
+      full_name: data.full_name,
+      role: "USER", // ALWAYS USER
+      phone: data.phone,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setUser(newProfile);
+    localStorage.setItem("tanyaternak_demo_user", JSON.stringify(newProfile));
+    document.cookie = `tanyaternak_role=USER; path=/; max-age=86400; SameSite=Lax`;
 
     setIsLoading(false);
     return { success: true };
+  };
+
+  const updateProfile = async (data: { full_name: string; phone: string }) => {
+    if (!user) return;
+    const updated: Profile = {
+      ...user,
+      full_name: data.full_name,
+      phone: data.phone,
+      updated_at: new Date().toISOString(),
+    };
+    setUser(updated);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("tanyaternak_demo_user", JSON.stringify(updated));
+    }
+    try {
+      await supabase
+        .from("profiles")
+        .update({ full_name: data.full_name, phone: data.phone, updated_at: updated.updated_at })
+        .eq("id", user.id);
+    } catch {
+      // Fallback to local profile state
+    }
   };
 
   const logout = async () => {
@@ -296,6 +317,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isDemo,
         login,
         register,
+        updateProfile,
         logout,
       }}
     >
