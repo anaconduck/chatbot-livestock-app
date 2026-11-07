@@ -114,14 +114,14 @@ export default function AdminUsersPage() {
             className="px-4 py-2.5 text-[#6E5D52] hover:text-[#4A2D1B] flex items-center gap-2 whitespace-nowrap"
           >
             <Layers className="w-4 h-4" />
-            Upload Konten [Riset & Edukasi]
+            Ringkasan & Statistik
           </Link>
           <Link
             href="/admin/documents"
             className="px-4 py-2.5 text-[#6E5D52] hover:text-[#4A2D1B] flex items-center gap-2 whitespace-nowrap"
           >
             <FileText className="w-4 h-4" />
-            Daftar Dokumen Riset & Edukasi
+            Kelola Konten Riset & Edukasi
           </Link>
           <Link
             href="/admin/users"
@@ -146,7 +146,7 @@ export default function AdminUsersPage() {
           <div>
             <h1 className="text-2xl font-black text-[#361D10]">Manajemen Akun Terdaftar</h1>
             <p className="text-xs text-[#7A6A60]">
-              Daftar pengguna dan peternak yang tersimpan di tabel Supabase profiles.
+              Daftar pengguna yang telah terdaftar pada platform.
             </p>
           </div>
 
@@ -216,7 +216,7 @@ export default function AdminUsersPage() {
                         <div className="space-y-1">
                           <p className="text-sm font-bold text-[#361D10]">Belum Ada Pengguna</p>
                           <p className="text-xs text-[#8C7A70]">
-                            Data profil pengguna di database Supabase masih kosong.
+                            Data profil pengguna masih kosong.
                           </p>
                         </div>
                       </div>

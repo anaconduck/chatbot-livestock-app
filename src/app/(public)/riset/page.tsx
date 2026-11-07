@@ -58,6 +58,25 @@ export default function RisetPage() {
   const funFacts = filteredAll.filter((d) => d.content_type === "FUN_FACT");
   const journals = filteredAll.filter((d) => d.content_type !== "FUN_FACT");
 
+  const getCategoryBadgeClass = (category: string, idx: number) => {
+    const lower = category.toLowerCase();
+    if (lower.includes("penyakit") || lower.includes("vaksin") || lower.includes("kesehatan")) {
+      return "bg-[#EAF5EA] text-[#2E7D32] border-[#C8E6C9]";
+    }
+    if (lower.includes("nutrisi") || lower.includes("pakan")) {
+      return "bg-[#FFF3D6] text-[#966318] border-[#F3DB9A]";
+    }
+    if (lower.includes("kandang") || lower.includes("iot")) {
+      return "bg-[#F2E9DF] text-[#4A2D1B] border-[#DFCFC0]";
+    }
+    const palette = [
+      "bg-[#FFF3D6] text-[#966318] border-[#F3DB9A]",
+      "bg-[#EAF5EA] text-[#2E7D32] border-[#C8E6C9]",
+      "bg-[#F2E9DF] text-[#4A2D1B] border-[#DFCFC0]",
+    ];
+    return palette[idx % palette.length];
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2]">
       <Navbar />
@@ -71,7 +90,7 @@ export default function RisetPage() {
             </h1>
 
             <p className="text-base sm:text-lg text-[#6C5D53] max-w-3xl leading-relaxed">
-              Eksplorasi wawasan biologis (Fun Fact) serta kumpulan referensi jurnal ilmiah terverifikasi untuk mendukung inovasi peternakan unggas modern.
+              Eksplorasi wawasan biologis (Fun Fact) serta kumpulan referensi jurnal ilmiah terverifikasi untuk mendukung inovasi peternakan modern.
             </p>
           </section>
         </Reveal>
@@ -121,7 +140,7 @@ export default function RisetPage() {
                       WAWASAN BIOLOGIS & FUN FACT
                     </div>
                     <h2 className="text-2xl sm:text-3xl font-bold text-[#361D10]">
-                      Tahukah Anda? Fakta Unik Seputar Peternakan Ayam
+                      Tahukah Anda? Fakta Unik Seputar Peternakan
                     </h2>
                   </div>
                   <span className="text-xs font-semibold text-[#7A695E]">
@@ -131,7 +150,7 @@ export default function RisetPage() {
               </Reveal>
 
               {funFacts.length === 0 ? (
-                <div className="bg-white rounded-3xl p-10 border border-[#E8DCCF] text-center space-y-2">
+                <div className="bg-[#FFFCF7] rounded-3xl p-10 border border-[#E5D7C6] text-center space-y-2">
                   <div className="w-11 h-11 rounded-2xl bg-[#FAF4EB] text-[#DE992B] flex items-center justify-center mx-auto">
                     <Inbox className="w-5 h-5" />
                   </div>
@@ -146,19 +165,23 @@ export default function RisetPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {funFacts.map((fact, idx) => (
                     <Reveal key={fact.id} delayMs={(idx % 3) * 100}>
-                      <div className="interactive-card bg-white rounded-3xl overflow-hidden border border-[#E8DCCF] shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-full group">
+                      <div
+                        className={`interactive-card bg-gradient-to-b from-[#FFFCF7] to-[#FAF4EB]/90 rounded-3xl overflow-hidden border border-[#E2D4C3] hover:border-[#DE992B]/60 shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-full group ${
+                          !fact.image_url ? "border-t-4 border-t-[#DE992B]" : ""
+                        }`}
+                      >
                         {/* Tampilkan gambar hanya jika Fun Fact memiliki foto */}
                         {fact.image_url && (
-                          <div className="relative aspect-16/10 w-full overflow-hidden bg-[#EAE2D7]">
+                          <div className="relative aspect-16/10 w-full overflow-hidden bg-[#EAE2D7] border-b border-[#E6D8C7]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={fact.image_url}
                               alt={fact.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent opacity-60" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#361D10]/40 via-transparent to-transparent opacity-60" />
                             <div className="absolute top-3.5 right-3.5">
-                              <span className="px-2.5 py-1 rounded-md bg-white/95 text-[10px] font-extrabold text-[#4A2D1B] shadow-xs uppercase tracking-wider backdrop-blur-xs">
+                              <span className="px-2.5 py-1 rounded-md bg-[#361D10]/90 text-[10px] font-extrabold text-[#FAF7F2] shadow-xs uppercase tracking-wider backdrop-blur-xs">
                                 Fun Fact #{String(idx + 1).padStart(2, "0")}
                               </span>
                             </div>
@@ -168,21 +191,26 @@ export default function RisetPage() {
                         <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                           <div className="space-y-3">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="px-2.5 py-1 rounded-md bg-[#FAF4EB] text-[10px] font-bold text-[#966318] border border-[#F3E2CB]">
+                              <span
+                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${getCategoryBadgeClass(
+                                  fact.category,
+                                  idx
+                                )}`}
+                              >
                                 {fact.category}
                               </span>
                               {!fact.image_url && (
-                                <span className="text-[11px] font-semibold text-[#8C7A70]">
+                                <span className="px-2 py-0.5 rounded-md bg-[#F2E9DF] text-[10px] font-bold text-[#4A2D1B]">
                                   Fun Fact #{String(idx + 1).padStart(2, "0")}
                                 </span>
                               )}
                             </div>
 
-                            <h3 className="text-base font-bold text-[#361D10] leading-snug">
+                            <h3 className="text-base font-bold text-[#361D10] group-hover:text-[#965A2E] transition-colors leading-snug">
                               {fact.title}
                             </h3>
 
-                            <p className="text-xs text-[#6B5B51] leading-relaxed whitespace-pre-line">
+                            <p className="text-xs text-[#5F4F45] leading-relaxed whitespace-pre-line">
                               {fact.description}
                             </p>
                           </div>
@@ -204,7 +232,7 @@ export default function RisetPage() {
                       REFERENSI & PUBLIKASI ILMIAH
                     </div>
                     <h2 className="text-2xl sm:text-3xl font-bold text-[#361D10]">
-                      Jurnal Ilmiah Peternakan Unggas
+                      Jurnal Ilmiah Peternakan
                     </h2>
                   </div>
                   <span className="text-xs font-semibold text-[#7A695E]">
@@ -214,7 +242,7 @@ export default function RisetPage() {
               </Reveal>
 
               {journals.length === 0 ? (
-                <div className="bg-white rounded-3xl p-10 border border-[#E8DCCF] text-center space-y-2">
+                <div className="bg-[#FFFCF7] rounded-3xl p-10 border border-[#E5D7C6] text-center space-y-2">
                   <div className="w-11 h-11 rounded-2xl bg-[#FAF4EB] text-[#DE992B] flex items-center justify-center mx-auto">
                     <Inbox className="w-5 h-5" />
                   </div>
@@ -229,30 +257,40 @@ export default function RisetPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {journals.map((journal, idx) => (
                     <Reveal key={journal.id} delayMs={(idx % 2) * 100}>
-                      <div className="interactive-card bg-white rounded-3xl p-6 border border-[#E8DCCF] shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-full space-y-4">
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="px-2.5 py-1 rounded-md bg-[#FAF4EB] text-[10px] font-bold text-[#966318] border border-[#F3E2CB]">
-                              {journal.category}
-                            </span>
-                            <span className="text-[11px] font-semibold text-[#8C7A70]">
-                              Jurnal Ilmiah
-                            </span>
+                      <div className="interactive-card bg-[#FFFCF7] rounded-3xl overflow-hidden border border-[#E2D4C3] border-l-4 border-l-[#4A2D1B] hover:border-[#DE992B]/70 shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-full group">
+                        <div className="p-6 space-y-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#EAF5EA] text-[#2E7D32] border border-[#C8E6C9] text-[10px] font-bold">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]" />
+                                Jurnal Ilmiah
+                              </span>
+                              <span
+                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${getCategoryBadgeClass(
+                                  journal.category,
+                                  idx
+                                )}`}
+                              >
+                                {journal.category}
+                              </span>
+                            </div>
                           </div>
 
-                          <h3 className="text-base sm:text-lg font-bold text-[#361D10] leading-snug">
+                          <h3 className="text-base sm:text-lg font-bold text-[#361D10] group-hover:text-[#965A2E] transition-colors leading-snug pt-0.5">
                             {journal.title}
                           </h3>
 
-                          <p className="text-xs text-[#6B5B51] leading-relaxed whitespace-pre-line">
+                          <p className="text-xs text-[#5F4F45] leading-relaxed whitespace-pre-line">
                             {journal.description}
                           </p>
                         </div>
 
-                        <div className="pt-3.5 border-t border-[#F1E7DD] flex items-center justify-between gap-3">
-                          <div className="text-xs text-[#7A695E] flex items-center gap-1.5 truncate">
-                            <User className="w-3.5 h-3.5 text-[#DE992B] shrink-0" />
-                            <span className="font-medium truncate">
+                        <div className="px-6 py-3.5 bg-[#F6EFE4] border-t border-[#E6D8C7] flex items-center justify-between gap-3">
+                          <div className="text-xs text-[#5A483E] flex items-center gap-2 truncate">
+                            <div className="w-6 h-6 rounded-lg bg-[#FFF5E5] border border-[#F3DB9A] flex items-center justify-center shrink-0">
+                              <User className="w-3.5 h-3.5 text-[#DE992B]" />
+                            </div>
+                            <span className="font-semibold truncate">
                               {journal.author || "Tim Riset TanyaTernak"}
                             </span>
                           </div>
@@ -262,7 +300,7 @@ export default function RisetPage() {
                               href={journal.source_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-3.5 py-2 rounded-xl bg-[#4A2D1B] hover:bg-[#382112] text-white text-xs font-bold inline-flex items-center gap-1.5 shrink-0 transition-colors"
+                              className="px-3.5 py-2 rounded-xl bg-[#4A2D1B] hover:bg-[#382112] text-white text-xs font-bold inline-flex items-center gap-1.5 shrink-0 transition-colors shadow-xs"
                             >
                               <span>Buka Jurnal</span>
                               <ExternalLink className="w-3.5 h-3.5 text-[#DE992B]" />

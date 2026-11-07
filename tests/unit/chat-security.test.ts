@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { MAX_QUERY_LENGTH, MAX_REQUESTS_PER_MINUTE } from "@/app/api/chat/route";
 
-describe("Keamanan Chatbot & Proteksi Kuota Dify", () => {
+describe("Keamanan Chatbot & Proteksi Rate Limit", () => {
   it("harus memiliki batas panjang maksimum pertanyaan", () => {
     expect(MAX_QUERY_LENGTH).toBe(1000);
     expect(MAX_QUERY_LENGTH).toBeGreaterThan(0);

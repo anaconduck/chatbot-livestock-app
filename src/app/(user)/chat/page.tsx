@@ -21,6 +21,7 @@ import {
   X,
   ArrowLeft,
   LogIn,
+  ExternalLink,
 } from "lucide-react";
 
 const MAX_GUEST_CHATS = 3;
@@ -363,7 +364,7 @@ function ChatInner() {
                       <div className="mt-4 pt-3.5 border-t border-[#E3D7C9] space-y-2">
                         <div className="text-xs font-bold text-[#4A2D1B] flex items-center gap-1.5">
                           <BookOpen className="w-3.5 h-3.5 text-[#DE992B]" />
-                          <span>Sumber Literatur Terverifikasi:</span>
+                          <span>Sumber & Referensi Internet:</span>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
@@ -372,12 +373,29 @@ function ChatInner() {
                               key={sIdx}
                               className="bg-white rounded-xl p-2.5 border border-[#E8DCCF] shadow-2xs space-y-1"
                             >
-                              <div className="text-xs font-bold text-[#361D10] truncate">
-                                📄 {src.title}
-                              </div>
+                              {src.url ? (
+                                <a
+                                  href={src.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs font-bold text-[#361D10] hover:text-[#DE992B] flex items-start justify-between gap-1.5 group"
+                                >
+                                  <span className="line-clamp-2">{src.title}</span>
+                                  <ExternalLink className="w-3.5 h-3.5 text-[#DE992B] shrink-0 mt-0.5" />
+                                </a>
+                              ) : (
+                                <div className="text-xs font-bold text-[#361D10] truncate">
+                                  📄 {src.title}
+                                </div>
+                              )}
+                              {src.sourceName && (
+                                <div className="text-[10px] font-semibold text-[#966318]">
+                                  Sumber: {src.sourceName}
+                                </div>
+                              )}
                               {src.snippet && (
-                                <p className="text-[11px] text-[#7A6A60] line-clamp-2 italic">
-                                  &ldquo;{src.snippet}&rdquo;
+                                <p className="text-[11px] text-[#7A6A60] line-clamp-2">
+                                  {src.snippet}
                                 </p>
                               )}
                             </div>

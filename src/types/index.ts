@@ -31,7 +31,6 @@ export interface Conversation {
   id: string;
   user_id: string;
   title: string;
-  dify_conversation_id?: string | null;
   created_at: string;
   updated_at: string;
   last_message?: string;
@@ -44,6 +43,7 @@ export interface ChatSource {
   page?: number | string;
   snippet?: string;
   url?: string;
+  sourceName?: string;
 }
 
 export interface ChatMessage {
@@ -51,7 +51,6 @@ export interface ChatMessage {
   conversation_id: string;
   role: "user" | "assistant" | "system";
   content: string;
-  dify_message_id?: string | null;
   sources?: ChatSource[];
   created_at: string;
 }

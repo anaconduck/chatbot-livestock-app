@@ -13,14 +13,8 @@ const clientEnvSchema = z.object({
 
 const serverEnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional().default("dummy-service-role-key"),
-  DIFY_BASE_URL: z.string().url().default("https://api.dify.ai/v1"),
-  DIFY_CHAT_API_KEY: z.string().optional().default("dummy-dify-chat-key"),
-  DIFY_KNOWLEDGE_API_KEY: z.string().optional().default("dummy-dify-knowledge-key"),
-  DIFY_DATASET_ID: z.string().optional().default("dummy-dataset-id"),
-  DIFY_MOCK_MODE: z
-    .enum(["true", "false", "1", "0"])
-    .default("true")
-    .transform((val) => val === "true" || val === "1"),
+  GEMINI_API_KEY: z.string().optional().default(""),
+  GROQ_API_KEY: z.string().optional().default(""),
 });
 
 export const clientEnv = clientEnvSchema.parse({
@@ -37,10 +31,7 @@ export const getServerEnv = () => {
   }
   return serverEnvSchema.parse({
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
-    DIFY_BASE_URL: process.env.DIFY_BASE_URL,
-    DIFY_CHAT_API_KEY: process.env.DIFY_CHAT_API_KEY,
-    DIFY_KNOWLEDGE_API_KEY: process.env.DIFY_KNOWLEDGE_API_KEY,
-    DIFY_DATASET_ID: process.env.DIFY_DATASET_ID,
-    DIFY_MOCK_MODE: process.env.DIFY_MOCK_MODE,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    GROQ_API_KEY: process.env.GROQ_API_KEY,
   });
 };

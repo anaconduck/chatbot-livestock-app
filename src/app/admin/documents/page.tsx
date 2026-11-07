@@ -221,7 +221,7 @@ export default function AdminDocumentsPage() {
             className="px-4 py-2.5 text-[#6E5D52] hover:text-[#4A2D1B] flex items-center gap-2 whitespace-nowrap"
           >
             <Layers className="w-4 h-4" />
-            Input Konten [Riset & Edukasi]
+            Ringkasan & Statistik
           </Link>
           <Link
             href="/admin/documents"
@@ -255,7 +255,7 @@ export default function AdminDocumentsPage() {
               Kelola Konten [Riset & Edukasi]
             </h1>
             <p className="text-xs text-[#7A6A60]">
-              Daftar seluruh Fun Fact dan Jurnal Ilmiah yang tersimpan di tabel database Supabase.
+              Daftar seluruh Fun Fact dan Jurnal Ilmiah yang tampil pada halaman Riset & Edukasi.
             </p>
           </div>
 

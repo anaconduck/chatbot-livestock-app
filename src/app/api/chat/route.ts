@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { z } from "zod";
-import { sendChatMessage } from "@/lib/dify/chat";
+import { sendChatMessage } from "@/lib/ai/chat";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,7 +17,7 @@ const ANONYMOUS_CHAT_COOKIE = "tanyaternak_chat_visitor";
 const ANONYMOUS_CHAT_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 interface ChatIdentity {
-  difyUserId: string;
+  userId: string;
   authenticated: boolean;
 }
 
@@ -27,7 +27,7 @@ async function getChatIdentity(): Promise<ChatIdentity> {
 
   if (roleCookie === "USER" || roleCookie === "ADMIN") {
     return {
-      difyUserId: `user-${roleCookie.toLowerCase()}`,
+      userId: `user-${roleCookie.toLowerCase()}`,
       authenticated: true,
     };
   }
@@ -41,7 +41,7 @@ async function getChatIdentity(): Promise<ChatIdentity> {
 
     if (!authError && user) {
       return {
-        difyUserId: user.id,
+        userId: user.id,
         authenticated: true,
       };
     }
@@ -66,7 +66,7 @@ async function getChatIdentity(): Promise<ChatIdentity> {
   }
 
   return {
-    difyUserId: `guest-${visitorId}`,
+    userId: `guest-${visitorId}`,
     authenticated: false,
   };
 }
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     const forwarded = req.headers.get("x-forwarded-for");
     const clientIp = forwarded?.split(",")[0]?.trim() || "unknown";
     const rateLimitKey = identity.authenticated
-      ? `user:${identity.difyUserId}`
+      ? `user:${identity.userId}`
       : `guest:${clientIp}`;
     const rateCheck = checkRateLimit(
       rateLimitKey,
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
     const response = await sendChatMessage({
       query: parsedBody.data.query,
       conversation_id: parsedBody.data.conversation_id,
-      user: identity.difyUserId,
+      user: identity.userId,
     });
 
     return NextResponse.json({

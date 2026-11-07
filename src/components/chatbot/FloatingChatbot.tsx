@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Send, X, Maximize2, Loader2, BookOpen, LogIn } from "lucide-react";
+import { Send, X, Loader2, BookOpen, LogIn, ExternalLink } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 import type { ChatMessage } from "@/types";
 
@@ -210,14 +210,6 @@ export const FloatingChatbot: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-1">
-              <Link
-                href={user ? "/chat" : "/login?redirect=/chat"}
-                className="p-1.5 rounded-lg text-[#D8C7B8] hover:text-white hover:bg-white/10 transition-colors"
-                title={user ? "Buka Ruang Konsultasi Penuh" : "Masuk sebagai pengguna untuk akses penuh"}
-                onClick={() => setIsOpen(false)}
-              >
-                <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              </Link>
               <button
                 onClick={() => setIsOpen(false)}
                 className="p-1.5 rounded-lg text-[#D8C7B8] hover:text-white hover:bg-white/10 transition-colors"
@@ -263,15 +255,35 @@ export const FloatingChatbot: React.FC = () => {
 
                   {/* Sources Preview */}
                   {msg.sources && msg.sources.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-[#E8DCCF] text-[10px] sm:text-[11px] text-[#7C6A5D]">
-                      <p className="font-semibold flex items-center gap-1 text-[#4E2E1E] mb-1">
-                        <BookOpen className="w-3 h-3 text-[#DE992B]" />
-                        Referensi Terkait:
+                    <div className="mt-2.5 pt-2 border-t border-[#E8DCCF] text-[10px] sm:text-[11px] text-[#7C6A5D]">
+                      <p className="font-bold flex items-center gap-1 text-[#4E2E1E] mb-1.5">
+                        <BookOpen className="w-3 h-3 text-[#DE992B] shrink-0" />
+                        Sumber & Referensi Internet:
                       </p>
-                      <ul className="space-y-1">
+                      <ul className="space-y-1.5">
                         {msg.sources.map((s, idx) => (
-                          <li key={idx} className="truncate">
-                            • {s.title}
+                          <li key={idx} className="leading-snug">
+                            {s.url ? (
+                              <a
+                                href={s.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-start gap-1 text-[#4E2E1E] hover:text-[#DE992B] font-medium hover:underline break-words"
+                              >
+                                <ExternalLink className="w-2.5 h-2.5 text-[#DE992B] shrink-0 mt-0.5" />
+                                <span>
+                                  {s.title}
+                                  {s.sourceName ? (
+                                    <span className="text-[#8C7A70] font-normal">
+                                      {" "}
+                                      ({s.sourceName})
+                                    </span>
+                                  ) : null}
+                                </span>
+                              </a>
+                            ) : (
+                              <span>• {s.title}</span>
+                            )}
                           </li>
                         ))}
                       </ul>
