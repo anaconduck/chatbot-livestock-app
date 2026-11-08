@@ -13,12 +13,41 @@ import {
   ExternalLink,
   Inbox,
   Loader2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
+
+const FUN_FACT_MAX_CHARS = 300;
+const FUN_FACT_PREVIEW_CHARS = 245;
+const JOURNAL_MAX_CHARS = 190;
+const JOURNAL_PREVIEW_CHARS = 145;
+
+function getTruncatedText(
+  text: string | undefined,
+  maxChars: number,
+  previewChars: number
+) {
+  const clean = (text || "").trim();
+  if (clean.length <= maxChars) {
+    return { isLong: false, preview: clean, full: clean };
+  }
+  const sliced = clean.slice(0, previewChars);
+  const lastSpace = sliced.lastIndexOf(" ");
+  const preview =
+    (lastSpace > previewChars * 0.7 ? sliced.slice(0, lastSpace) : sliced).trimEnd() +
+    "...";
+  return { isLong: true, preview, full: clean };
+}
 
 export default function RisetPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   useEffect(() => {
     // Hapus sisa data simulasi lama di browser jika ada
@@ -180,62 +209,90 @@ export default function RisetPage() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {funFacts.map((fact, idx) => (
-                    <Reveal key={fact.id} delayMs={(idx % 3) * 100}>
-                      <div
-                        className={`interactive-card bg-gradient-to-b from-[#FFFCF7] to-[#FAF4EB]/90 rounded-3xl overflow-hidden border border-[#E2D4C3] hover:border-[#DE992B]/60 shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-full group ${
-                          !fact.image_url ? "border-t-4 border-t-[#DE992B]" : ""
-                        }`}
-                      >
-                        {/* Tampilkan gambar hanya jika Fun Fact memiliki foto */}
-                        {fact.image_url && (
-                          <div className="relative aspect-16/10 w-full overflow-hidden bg-[#EAE2D7] border-b border-[#E6D8C7]">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={fact.image_url}
-                              alt={fact.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#361D10]/40 via-transparent to-transparent opacity-60" />
-                            <div className="absolute top-3.5 right-3.5">
-                              <span className="px-2.5 py-1 rounded-md bg-[#361D10]/90 text-[10px] font-extrabold text-[#FAF7F2] shadow-xs uppercase tracking-wider backdrop-blur-xs">
-                                Fun Fact #{String(idx + 1).padStart(2, "0")}
-                              </span>
-                            </div>
-                          </div>
-                        )}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+                  {funFacts.map((fact, idx) => {
+                    const isExpanded = !!expandedIds[fact.id];
+                    const { isLong, preview, full } = getTruncatedText(
+                      fact.description,
+                      FUN_FACT_MAX_CHARS,
+                      FUN_FACT_PREVIEW_CHARS
+                    );
 
-                        <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between gap-2">
-                              <span
-                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${getCategoryBadgeClass(
-                                  fact.category,
-                                  idx
-                                )}`}
-                              >
-                                {fact.category}
-                              </span>
-                              {!fact.image_url && (
-                                <span className="px-2 py-0.5 rounded-md bg-[#F2E9DF] text-[10px] font-bold text-[#4A2D1B]">
+                    return (
+                      <Reveal key={fact.id} delayMs={(idx % 3) * 100}>
+                        <div
+                          className={`interactive-card bg-gradient-to-b from-[#FFFCF7] to-[#FAF4EB]/90 rounded-3xl overflow-hidden border border-[#E2D4C3] hover:border-[#DE992B]/60 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group ${
+                            !fact.image_url ? "border-t-4 border-t-[#DE992B]" : ""
+                          }`}
+                        >
+                          {/* Tampilkan gambar hanya jika Fun Fact memiliki foto */}
+                          {fact.image_url && (
+                            <div className="relative aspect-16/10 w-full overflow-hidden bg-[#EAE2D7] border-b border-[#E6D8C7]">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={fact.image_url}
+                                alt={fact.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-[#361D10]/40 via-transparent to-transparent opacity-60" />
+                              <div className="absolute top-3.5 right-3.5">
+                                <span className="px-2.5 py-1 rounded-md bg-[#361D10]/90 text-[10px] font-extrabold text-[#FAF7F2] shadow-xs uppercase tracking-wider backdrop-blur-xs">
                                   Fun Fact #{String(idx + 1).padStart(2, "0")}
                                 </span>
-                              )}
+                              </div>
                             </div>
+                          )}
 
-                            <h3 className="text-base font-bold text-[#361D10] group-hover:text-[#965A2E] transition-colors leading-snug">
-                              {fact.title}
-                            </h3>
+                          <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between gap-2">
+                                <span
+                                  className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${getCategoryBadgeClass(
+                                    fact.category,
+                                    idx
+                                  )}`}
+                                >
+                                  {fact.category}
+                                </span>
+                                {!fact.image_url && (
+                                  <span className="px-2 py-0.5 rounded-md bg-[#F2E9DF] text-[10px] font-bold text-[#4A2D1B]">
+                                    Fun Fact #{String(idx + 1).padStart(2, "0")}
+                                  </span>
+                                )}
+                              </div>
 
-                            <p className="text-xs text-[#5F4F45] leading-relaxed whitespace-pre-line">
-                              {fact.description}
-                            </p>
+                              <h3 className="text-base font-bold text-[#361D10] group-hover:text-[#965A2E] transition-colors leading-snug">
+                                {fact.title}
+                              </h3>
+
+                              <div className="space-y-2">
+                                <p className="text-xs text-[#5F4F45] leading-relaxed whitespace-pre-line">
+                                  {isExpanded ? full : preview}
+                                </p>
+
+                                {isLong && (
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleExpand(fact.id)}
+                                    className="inline-flex items-center gap-1 text-xs font-bold text-[#A86F15] hover:text-[#4A2D1B] transition-colors cursor-pointer pt-0.5"
+                                  >
+                                    <span>
+                                      {isExpanded ? "Sembunyikan" : "Selengkapnya"}
+                                    </span>
+                                    {isExpanded ? (
+                                      <ChevronUp className="w-3.5 h-3.5" />
+                                    ) : (
+                                      <ChevronDown className="w-3.5 h-3.5" />
+                                    )}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </Reveal>
-                  ))}
+                      </Reveal>
+                    );
+                  })}
                 </div>
               )}
             </section>
@@ -272,62 +329,90 @@ export default function RisetPage() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {journals.map((journal, idx) => (
-                    <Reveal key={journal.id} delayMs={(idx % 2) * 100}>
-                      <div className="interactive-card bg-[#FFFCF7] rounded-3xl overflow-hidden border border-[#E2D4C3] hover:border-[#DE992B]/70 shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-full group">
-                        <div className="p-6 space-y-3">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#EAF5EA] text-[#2E7D32] border border-[#C8E6C9] text-[10px] font-bold">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]" />
-                                Jurnal Ilmiah
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                  {journals.map((journal, idx) => {
+                    const isExpanded = !!expandedIds[journal.id];
+                    const { isLong, preview, full } = getTruncatedText(
+                      journal.description,
+                      JOURNAL_MAX_CHARS,
+                      JOURNAL_PREVIEW_CHARS
+                    );
+
+                    return (
+                      <Reveal key={journal.id} delayMs={(idx % 2) * 100}>
+                        <div className="interactive-card bg-[#FFFCF7] rounded-3xl overflow-hidden border border-[#E2D4C3] hover:border-[#DE992B]/70 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+                          <div className="p-6 space-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#EAF5EA] text-[#2E7D32] border border-[#C8E6C9] text-[10px] font-bold">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]" />
+                                  Jurnal Ilmiah
+                                </span>
+                                <span
+                                  className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${getCategoryBadgeClass(
+                                    journal.category,
+                                    idx
+                                  )}`}
+                                >
+                                  {journal.category}
+                                </span>
+                              </div>
+                            </div>
+
+                            <h3 className="text-base sm:text-lg font-bold text-[#361D10] group-hover:text-[#965A2E] transition-colors leading-snug pt-0.5">
+                              {journal.title}
+                            </h3>
+
+                            <div className="space-y-2">
+                              <p className="text-xs text-[#5F4F45] leading-relaxed whitespace-pre-line">
+                                {isExpanded ? full : preview}
+                              </p>
+
+                              {isLong && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleExpand(journal.id)}
+                                  className="inline-flex items-center gap-1 text-xs font-bold text-[#A86F15] hover:text-[#4A2D1B] transition-colors cursor-pointer pt-0.5"
+                                >
+                                  <span>
+                                    {isExpanded ? "Sembunyikan" : "Selengkapnya"}
+                                  </span>
+                                  {isExpanded ? (
+                                    <ChevronUp className="w-3.5 h-3.5" />
+                                  ) : (
+                                    <ChevronDown className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="px-6 py-3.5 bg-[#F6EFE4] border-t border-[#E6D8C7] flex items-center justify-between gap-3">
+                            <div className="text-xs text-[#5A483E] flex items-center gap-2 truncate">
+                              <div className="w-6 h-6 rounded-lg bg-[#FFF5E5] border border-[#F3DB9A] flex items-center justify-center shrink-0">
+                                <User className="w-3.5 h-3.5 text-[#DE992B]" />
+                              </div>
+                              <span className="font-semibold truncate">
+                                {journal.author || "Tim Riset TanyaTernak"}
                               </span>
-                              <span
-                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${getCategoryBadgeClass(
-                                  journal.category,
-                                  idx
-                                )}`}
+                            </div>
+
+                            {journal.source_url && (
+                              <a
+                                href={journal.source_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-3.5 py-2 rounded-xl bg-[#4A2D1B] hover:bg-[#382112] text-white text-xs font-bold inline-flex items-center gap-1.5 shrink-0 transition-colors shadow-xs"
                               >
-                                {journal.category}
-                              </span>
-                            </div>
+                                <span>Buka Jurnal</span>
+                                <ExternalLink className="w-3.5 h-3.5 text-[#DE992B]" />
+                              </a>
+                            )}
                           </div>
-
-                          <h3 className="text-base sm:text-lg font-bold text-[#361D10] group-hover:text-[#965A2E] transition-colors leading-snug pt-0.5">
-                            {journal.title}
-                          </h3>
-
-                          <p className="text-xs text-[#5F4F45] leading-relaxed whitespace-pre-line">
-                            {journal.description}
-                          </p>
                         </div>
-
-                        <div className="px-6 py-3.5 bg-[#F6EFE4] border-t border-[#E6D8C7] flex items-center justify-between gap-3">
-                          <div className="text-xs text-[#5A483E] flex items-center gap-2 truncate">
-                            <div className="w-6 h-6 rounded-lg bg-[#FFF5E5] border border-[#F3DB9A] flex items-center justify-center shrink-0">
-                              <User className="w-3.5 h-3.5 text-[#DE992B]" />
-                            </div>
-                            <span className="font-semibold truncate">
-                              {journal.author || "Tim Riset TanyaTernak"}
-                            </span>
-                          </div>
-
-                          {journal.source_url && (
-                            <a
-                              href={journal.source_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-3.5 py-2 rounded-xl bg-[#4A2D1B] hover:bg-[#382112] text-white text-xs font-bold inline-flex items-center gap-1.5 shrink-0 transition-colors shadow-xs"
-                            >
-                              <span>Buka Jurnal</span>
-                              <ExternalLink className="w-3.5 h-3.5 text-[#DE992B]" />
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    </Reveal>
-                  ))}
+                      </Reveal>
+                    );
+                  })}
                 </div>
               )}
             </section>
