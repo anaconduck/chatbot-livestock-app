@@ -23,6 +23,8 @@ import {
   ExternalLink,
   Image as ImageIcon,
   AlertTriangle,
+  ShieldCheck,
+  Download,
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -220,17 +222,23 @@ export default function AdminDocumentsPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2]">
-      {/* Top Header */}
+      {/* Top Bar */}
       <header className="sticky top-0 z-30 w-full bg-white border-b border-[#E8DCCF]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <Logo href="/admin" />
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-bold text-[#361D10]">
-              {user?.full_name || "Admin"}
-            </span>
+
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex flex-col text-right">
+              <span className="text-xs font-bold text-[#361D10]">
+                {user?.full_name || "Admin"}
+              </span>
+              <span className="text-[10px] text-[#2E7D32] font-semibold">
+                Verified Administrator
+              </span>
+            </div>
             <button
               onClick={() => logout()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4A2D1B] text-white text-xs font-semibold"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#4A2D1B] hover:bg-[#382112] text-white text-xs font-bold transition-all shadow-xs"
             >
               <span>Logout</span>
               <LogOut className="w-3.5 h-3.5" />
@@ -239,9 +247,33 @@ export default function AdminDocumentsPage() {
         </div>
       </header>
 
-      {/* Tabs */}
+      {/* Admin Sub-Navbar / Navigation Tabs */}
       <div className="bg-[#FAF7F2] border-b border-[#E8DCCF]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-2 overflow-x-auto text-xs font-semibold pt-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#4A2D1B] text-white flex items-center justify-center">
+              <ShieldCheck className="w-5 h-5 text-[#DE992B]" />
+            </div>
+            <div>
+              <h1 className="text-lg font-extrabold text-[#361D10]">
+                Panel Pengelola Website
+              </h1>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs">
+            <button
+              onClick={() => loadDocuments()}
+              className="px-3 py-2 rounded-xl bg-white border border-[#E2D5C7] text-[#5A483E] hover:border-[#4A2D1B] flex items-center gap-1.5 font-medium transition-colors cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 text-[#4A2D1B]" />
+              <span>Refresh Data</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Tab links */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-2 overflow-x-auto text-xs font-semibold pt-1">
           <Link
             href="/admin"
             className="px-4 py-2.5 text-[#6E5D52] hover:text-[#4A2D1B] flex items-center gap-2 whitespace-nowrap"
