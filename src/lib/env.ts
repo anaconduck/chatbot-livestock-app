@@ -14,7 +14,6 @@ const clientEnvSchema = z.object({
 const serverEnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional().default("dummy-service-role-key"),
   GEMINI_API_KEY: z.string().optional().default(""),
-  GROQ_API_KEY: z.string().optional().default(""),
 });
 
 export const clientEnv = clientEnvSchema.parse({
@@ -32,6 +31,5 @@ export const getServerEnv = () => {
   return serverEnvSchema.parse({
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-    GROQ_API_KEY: process.env.GROQ_API_KEY,
   });
 };

@@ -26,16 +26,46 @@ function stripHtmlTags(input: string): string {
 }
 
 /**
- * Cari referensi artikel berbahasa Indonesia dari Wikipedia API (Gratis tanpa API Key)
+ * Bersihkan kata tanya ("apa itu", "bagaimana", dll.) & perbaiki salah ketik umum (misal "boiler" -> "broiler")
+ * agar pencarian referensi jurnal & Wikipedia akurat dan tidak melenceng
+ */
+function normalizeLivestockQuery(rawQuery: string): string {
+  const cleaned = rawQuery
+    .toLowerCase()
+    .replace(/\bboiler\b/g, "broiler")
+    .replace(/\bpetelor\b/g, "petelur")
+    .replace(
+      /\b(apa|apakah|itu|yang|dimaksud|dengan|pengertian|arti|bagaimana|gimana|cara|kenapa|mengapa|tolong|jelaskan|sebutkan|tentang)\b/g,
+      " "
+    )
+    .replace(/[^\w\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return cleaned || rawQuery.trim();
+}
+
+/**
+ * Cari referensi artikel berbahasa Indonesia dari Wikipedia API (Gratis & Terfilter Topik Peternakan)
  */
 async function searchWikipediaIndonesia(query: string): Promise<ChatSource[]> {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3500);
+    const timeout = setTimeout(() => controller.abort(), 2000);
+
+    const cleanKeywords = normalizeLivestockQuery(query);
+    const wikiQuery =
+      cleanKeywords.includes("ternak") ||
+      cleanKeywords.includes("ayam") ||
+      cleanKeywords.includes("sapi") ||
+      cleanKeywords.includes("kambing") ||
+      cleanKeywords.includes("unggas")
+        ? cleanKeywords
+        : `${cleanKeywords} peternakan`;
 
     const searchUrl = `https://id.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
-      query
-    )}&utf8=1&format=json&srlimit=2`;
+      wikiQuery
+    )}&utf8=1&format=json&srlimit=4`;
 
     const res = await fetch(searchUrl, {
       signal: controller.signal,
@@ -45,16 +75,58 @@ async function searchWikipediaIndonesia(query: string): Promise<ChatSource[]> {
 
     if (!res.ok) return [];
     const data = await res.json();
-    const results = data?.query?.search || [];
+    const results: Array<{ title: string; snippet: string }> =
+      data?.query?.search || [];
 
-    return results.map((item: { title: string; snippet: string }) => ({
-      title: `${item.title} — Ensiklopedia Wikipedia`,
-      snippet: stripHtmlTags(item.snippet),
-      url: `https://id.wikipedia.org/wiki/${encodeURIComponent(
-        item.title.replace(/ /g, "_")
-      )}`,
-      sourceName: "id.wikipedia.org",
-    }));
+    const irrelevantWords = [
+      "orak-arik",
+      "masakan",
+      "resep",
+      "goreng",
+      "kuliner",
+      "pabrik gula",
+      "lokomotif",
+      "uap",
+      "film",
+      "lagu",
+      "album",
+      "sinetron",
+    ];
+    const relevantWords = [
+      "ternak",
+      "ayam",
+      "unggas",
+      "broiler",
+      "sapi",
+      "kambing",
+      "domba",
+      "pakan",
+      "kandang",
+      "penyakit",
+      "vaksin",
+      "hewan",
+      "telur",
+      "pertanian",
+      "nutrisi",
+      "biologi",
+    ];
+
+    return results
+      .filter((item) => {
+        const combined = `${item.title} ${stripHtmlTags(item.snippet)}`.toLowerCase();
+        const hasIrrelevant = irrelevantWords.some((w) => combined.includes(w));
+        const hasRelevant = relevantWords.some((w) => combined.includes(w));
+        return !hasIrrelevant && hasRelevant;
+      })
+      .slice(0, 1)
+      .map((item) => ({
+        title: `${item.title} — Ensiklopedia Wikipedia`,
+        snippet: stripHtmlTags(item.snippet),
+        url: `https://id.wikipedia.org/wiki/${encodeURIComponent(
+          item.title.replace(/ /g, "_")
+        )}`,
+        sourceName: "id.wikipedia.org",
+      }));
   } catch {
     return [];
   }
@@ -86,22 +158,24 @@ function reconstructOpenAlexAbstract(
 async function searchOpenAlexJournals(query: string): Promise<ChatSource[]> {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4000);
+    const timeout = setTimeout(() => controller.abort(), 2200);
 
+    const cleanKeywords = normalizeLivestockQuery(query);
     const searchQuery =
-      query.toLowerCase().includes("ternak") ||
-      query.toLowerCase().includes("ayam") ||
-      query.toLowerCase().includes("pakan") ||
-      query.toLowerCase().includes("unggas") ||
-      query.toLowerCase().includes("poultry") ||
-      query.toLowerCase().includes("sapi") ||
-      query.toLowerCase().includes("kambing")
-        ? query
-        : `${query} peternakan`;
+      cleanKeywords.includes("ternak") ||
+      cleanKeywords.includes("ayam") ||
+      cleanKeywords.includes("broiler") ||
+      cleanKeywords.includes("pakan") ||
+      cleanKeywords.includes("unggas") ||
+      cleanKeywords.includes("poultry") ||
+      cleanKeywords.includes("sapi") ||
+      cleanKeywords.includes("kambing")
+        ? cleanKeywords
+        : `${cleanKeywords} peternakan`;
 
     const url = `https://api.openalex.org/works?search=${encodeURIComponent(
       searchQuery
-    )}&per-page=2&select=title,doi,primary_location,publication_year,authorships,abstract_inverted_index`;
+    )}&per-page=5&select=title,doi,primary_location,publication_year,authorships,abstract_inverted_index`;
 
     const res = await fetch(url, {
       signal: controller.signal,
@@ -113,8 +187,24 @@ async function searchOpenAlexJournals(query: string): Promise<ChatSource[]> {
     const data = await res.json();
     const results = Array.isArray(data?.results) ? data.results : [];
 
+    const nonTechnicalWords = [
+      "sak emkm",
+      "akuntansi",
+      "human capital",
+      "komitmen organisasi",
+      "kinerja karyawan",
+      "strategi pemasaran",
+      "pajak",
+      "keuangan",
+    ];
+
     return results
-      .filter((work: { title?: string }) => Boolean(work?.title))
+      .filter((work: { title?: string }) => {
+        if (!work?.title) return false;
+        const lowerTitle = work.title.toLowerCase();
+        return !nonTechnicalWords.some((w) => lowerTitle.includes(w));
+      })
+      .slice(0, 2)
       .map(
         (work: {
           title: string;
@@ -264,268 +354,164 @@ async function gatherInternetSources(query: string): Promise<ChatSource[]> {
   return uniqueSources;
 }
 
-function buildSystemInstruction(sources: ChatSource[]): string {
-  const sourcesContext = sources
-    .map(
-      (s, i) =>
-        `[${i + 1}] Judul: ${s.title}\nSumber: ${s.sourceName || s.url}\nRingkasan: ${s.snippet || "-"}`
-    )
-    .join("\n\n");
+function buildSystemInstruction(sources: ChatSource[] = []): string {
+  const sourcesBlock =
+    sources.length > 0
+      ? `\nKonteks referensi pendukung:\n` +
+        sources
+          .map(
+            (s, i) =>
+              `[${i + 1}] Judul: ${s.title} (${s.sourceName || s.url})`
+          )
+          .join("\n") +
+        "\n"
+      : "";
 
   return `Anda adalah ChickAI Assistant, asisten virtual pintar dari platform TanyaTernak (Fakultas Peternakan Universitas Brawijaya).
 Tugas Anda adalah menjawab pertanyaan pengguna seputar peternakan secara akurat, jelas, ramah, dan terstruktur dalam Bahasa Indonesia.
-
-Gunakan wawasan ilmiah serta konteks referensi internet berikut sebagai rujukan pendukung:
-${sourcesContext}
-
+${sourcesBlock}
 Aturan jawaban:
-1. Langsung jawab inti pertanyaan pengguna di kalimat pertama (misalnya pengertian/definisi langsung, cara mengatasi, atau langkah praktis) sesuai apa yang ditanyakan.
-2. Gunakan teks polos yang rapi dengan poin bernomor (1, 2, 3) tanpa simbol bintang markdown (**).
-3. JANGAN menyalin atau menuliskan daftar judul jurnal/publikasi di dalam isi teks jawaban, dan JANGAN menuliskan "Referensi Sumber:" di akhir jawaban, karena daftar link referensi sudah ditampilkan secara otomatis di bagian khusus di bawah pesan.`;
+1. Pahami maksud pertanyaan pengguna secara cerdas meskipun terdapat salah ketik (typo), singkatan, atau bahasa sehari-hari peternak.
+2. Langsung jawab inti pertanyaan pengguna di kalimat pertama (misalnya pengertian/definisi langsung, cara mengatasi, atau langkah praktis) sesuai apa yang ditanyakan.
+3. Gunakan teks polos yang rapi dengan poin bernomor (1, 2, 3) tanpa simbol bintang markdown (**).
+4. JANGAN menyalin atau menuliskan daftar judul jurnal/publikasi di dalam isi teks jawaban, dan JANGAN menuliskan "Referensi Sumber:" di akhir jawaban.
+5. Di baris paling akhir setelah jawaban selesai, WAJIB tuliskan satu baris khusus dengan format persis:
+[KATA_KUNCI: <2-4 kata kunci ilmiah peternakan yang sudah dikoreksi dari typo>]`;
 }
 
-function cleanAnswerText(raw: string): string {
-  return raw
-    .replace(/\n*(?:Referensi Sumber|Sumber Referensi|Daftar Referensi|Referensi)\s*:[\s\S]*$/i, "")
+function extractGeminiKeywordAndCleanAnswer(raw: string): {
+  cleanAnswer: string;
+  correctedKeyword: string | null;
+} {
+  let correctedKeyword: string | null = null;
+  const keywordMatch = raw.match(/\[KATA_KUNCI\s*:\s*([^\]]+)\]/i);
+  if (keywordMatch && keywordMatch[1]) {
+    correctedKeyword = keywordMatch[1].trim();
+  }
+
+  const cleanAnswer = raw
+    .replace(/\[KATA_KUNCI\s*:[^\]]*\]/gi, "")
+    .replace(
+      /\n*(?:Referensi Sumber|Sumber Referensi|Daftar Referensi|Referensi)\s*:[\s\S]*$/i,
+      ""
+    )
     .replace(/\*\*(.*?)\*\*/g, "$1")
     .replace(/^#{1,4}\s+/gm, "")
     .trim();
+
+  return { cleanAnswer, correctedKeyword };
 }
 
 /**
- * Opsi 1: Google Gemini API (Mendukung Google AI Studio Key `AIza...` & Vertex AI Express Mode Key `AQ....`)
+ * Panggil satu endpoint Gemini secara cepat (tanpa thinking delay)
+ */
+async function callSingleGeminiEndpoint(
+  endpoint: string,
+  cleanKey: string,
+  query: string
+): Promise<{ answer: string; extraSources: ChatSource[] }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": cleanKey,
+      },
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [{ text: buildSystemInstruction() }],
+        },
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: query }],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.35,
+          maxOutputTokens: 750,
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    const text =
+      data?.candidates?.[0]?.content?.parts
+        ?.map((p: { text?: string }) => p.text || "")
+        .join("")
+        .trim() || "";
+
+    if (!text) {
+      throw new Error("Empty response");
+    }
+
+    return { answer: text, extraSources: [] };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
+ * Google Gemini API — memanggil endpoint tercepat secara paralel
  */
 async function tryGeminiApi(
   query: string,
-  sources: ChatSource[],
   apiKey: string
 ): Promise<{ answer: string; extraSources: ChatSource[] } | null> {
   const cleanKey = (apiKey || "").trim();
   if (!cleanKey) return null;
 
   const isVertexExpressKey = cleanKey.startsWith("AQ.");
-  const endpoints = isVertexExpressKey
+  const candidates = isVertexExpressKey
     ? [
-        `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(
-          cleanKey
-        )}`,
-        `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(
-          cleanKey
-        )}`,
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(
-          cleanKey
-        )}`,
+        callSingleGeminiEndpoint(
+          `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.0-flash-001:generateContent?key=${encodeURIComponent(
+            cleanKey
+          )}`,
+          cleanKey,
+          query
+        ),
+        callSingleGeminiEndpoint(
+          `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(
+            cleanKey
+          )}`,
+          cleanKey,
+          query
+        ),
       ]
     : [
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(
-          cleanKey
-        )}`,
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(
-          cleanKey
-        )}`,
+        callSingleGeminiEndpoint(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(
+            cleanKey
+          )}`,
+          cleanKey,
+          query
+        ),
+        callSingleGeminiEndpoint(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(
+            cleanKey
+          )}`,
+          cleanKey,
+          query
+        ),
       ];
 
-  for (const endpoint of endpoints) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 14000);
-
-      const res = await fetch(endpoint, {
-        method: "POST",
-        signal: controller.signal,
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": cleanKey,
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: buildSystemInstruction(sources) }],
-          },
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: query }],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 900,
-          },
-        }),
-      });
-      clearTimeout(timeout);
-
-      if (!res.ok) continue;
-      const data = await res.json();
-      const text =
-        data?.candidates?.[0]?.content?.parts
-          ?.map((p: { text?: string }) => p.text || "")
-          .join("")
-          .trim() || "";
-
-      if (!text) continue;
-
-      const groundingChunks =
-        data?.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-      const groundedSources: ChatSource[] = [];
-
-      for (const chunk of groundingChunks) {
-        if (chunk?.web?.uri && chunk?.web?.title) {
-          let host = "Sumber Web";
-          try {
-            host = new URL(chunk.web.uri).hostname.replace(/^www\./, "");
-          } catch {
-            // ignore
-          }
-          groundedSources.push({
-            title: chunk.web.title,
-            url: chunk.web.uri,
-            sourceName: host,
-            snippet: `Referensi web terindeks dari ${host}`,
-          });
-        }
-      }
-
-      return { answer: text, extraSources: groundedSources };
-    } catch {
-      continue;
-    }
-  }
-
-  return null;
-}
-
-/**
- * Opsi 2: Groq Cloud Free API (Llama 3.3 70B)
- */
-async function tryGroqApi(
-  query: string,
-  sources: ChatSource[],
-  apiKey: string
-): Promise<string | null> {
-  if (!apiKey || apiKey.trim() === "") return null;
-
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
-
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey.trim()}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [
-          { role: "system", content: buildSystemInstruction(sources) },
-          { role: "user", content: query },
-        ],
-        temperature: 0.4,
-        max_tokens: 900,
-      }),
-    });
-    clearTimeout(timeout);
-
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data?.choices?.[0]?.message?.content?.trim() || null;
+    return await Promise.any(candidates);
   } catch {
     return null;
   }
 }
 
 /**
- * Opsi 3: Layanan AI Publik Gratis Tanpa API Key (Pollinations AI Multi-Endpoint)
- */
-async function tryFreePublicAi(
-  query: string,
-  sources: ChatSource[]
-): Promise<string | null> {
-  const systemPrompt = buildSystemInstruction(sources);
-
-  // Percobaan 3A: Endpoint OpenAI-compatible POST
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
-
-    const res = await fetch("https://text.pollinations.ai/openai", {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (compatible; TanyaTernak/1.0)",
-      },
-      body: JSON.stringify({
-        model: "openai",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: query },
-        ],
-        temperature: 0.4,
-      }),
-    });
-    clearTimeout(timeout);
-
-    if (res.ok) {
-      const rawText = await res.text();
-      try {
-        const data = JSON.parse(rawText);
-        const content = data?.choices?.[0]?.message?.content?.trim();
-        if (content && content.length > 25) return content;
-      } catch {
-        // Jika respons langsung berupa plain text
-        if (
-          rawText &&
-          rawText.trim().length > 25 &&
-          !rawText.trim().startsWith("<")
-        ) {
-          return rawText.trim();
-        }
-      }
-    }
-  } catch {
-    // lanjut ke percobaan 3B
-  }
-
-  // Percobaan 3B: Endpoint Root POST Pollinations
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
-
-    const res = await fetch("https://text.pollinations.ai/", {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (compatible; TanyaTernak/1.0)",
-      },
-      body: JSON.stringify({
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: query },
-        ],
-        model: "openai",
-      }),
-    });
-    clearTimeout(timeout);
-
-    if (res.ok) {
-      const text = (await res.text()).trim();
-      if (text.length > 25 && !text.startsWith("<") && !text.startsWith("{")) {
-        return text;
-      }
-    }
-  } catch {
-    // lanjut ke fallback
-  }
-
-  return null;
-}
-
-/**
- * Opsi 4 (Cadangan Otomatis): Jawaban langsung yang komprehensif dan sesuai topik pertanyaan
+ * Cadangan lokal apabila GEMINI_API_KEY belum terpasang atau kuota harian habis
  */
 function synthesizeAnswerWithInternetSources(
   query: string,
@@ -624,13 +610,15 @@ function synthesizeAnswerWithInternetSources(
 
   if (
     q.includes("broiler") ||
+    q.includes("boiler") ||
     q.includes("pedaging") ||
     q.includes("doc") ||
     q.includes("panen") ||
     q.includes("bobot")
   ) {
     return (
-      "Pemeliharaan ayam pedaging (broiler) berfokus pada pencapaian bobot panen optimal dan efisiensi konversi pakan (FCR) dalam waktu singkat (28–35 hari):\n\n" +
+      "Ayam Broiler (sering disebut ayam boiler / ayam ras pedaging) adalah galur ayam hasil seleksi genetik unggul yang memiliki laju pertumbuhan sangat cepat dan efisiensi konversi pakan tinggi sehingga siap dipanen pada umur 28–35 hari.\n\n" +
+      "Kunci keberhasilan pemeliharaan ayam broiler meliputi:\n" +
       "1. Manajemen Fase Starter (Minggu 1–2): Fokus pada keberhasilan brooding (suhu 32–34°C), pencapaian bobot minggu pertama minimal 4,5 kali bobot DOC awal, dan perkembangan saluran pencernaan.\n" +
       "2. Manajemen Kepadatan (Density): Atur kepadatan sekitar 8–10 ekor/m² pada kandang terbuka (open house) atau 14–16 ekor/m² pada kandang tertutup (closed house) agar ruang makan dan oksigen merata.\n" +
       "3. Pemantauan Bobot & FCR: Lakukan penimbangan sampel rutin setiap minggu untuk memastikan keseragaman (uniformity) di atas 80% dan FCR terjaga di kisaran 1,4–1,6."
@@ -668,17 +656,6 @@ function synthesizeAnswerWithInternetSources(
     );
   }
 
-  // Cek apakah ada ringkasan ensiklopedia/ilmiah dari Wikipedia atau abstrak yang bisa dirangkum secara natural
-  const wikiSource = sources.find(
-    (s) => s.sourceName === "id.wikipedia.org" && s.snippet && s.snippet.length > 40
-  );
-  if (wikiSource) {
-    return (
-      `${wikiSource.snippet}\n\n` +
-      "Dalam konteks agribisnis dan peternakan modern, penerapan prinsip ini dikombinasikan dengan manajemen bibit unggul (breeding), formulasi nutrisi berimbang (feeding), serta pengendalian lingkungan kandang dan kesehatan ternak (management) untuk menghasilkan produktivitas yang optimal."
-    );
-  }
-
   return (
     `Dalam dunia peternakan modern, topik mengenai "${query}" berkaitan erat dengan upaya meningkatkan efisiensi produksi, kesehatan ternak, dan keberlanjutan usaha peternakan.\n\n` +
     "Secara praktis, penerapannya mencakup tiga aspek utama:\n" +
@@ -692,59 +669,46 @@ export async function sendChatMessage(
   payload: ChatRequestPayload
 ): Promise<ChatResponsePayload> {
   const env = getServerEnv();
-  const internetSources = await gatherInternetSources(payload.query);
 
-  // 1. Coba Gemini API jika GEMINI_API_KEY diatur (Gratis + Google Search Grounding)
-  const geminiResult = await tryGeminiApi(
-    payload.query,
-    internetSources,
-    env.GEMINI_API_KEY
-  );
+  // Jalankan panggilan Google Gemini AI & pencarian referensi internet secara PARALEL (bersamaan)
+  const [geminiResult, initialSources] = await Promise.all([
+    tryGeminiApi(payload.query, env.GEMINI_API_KEY),
+    gatherInternetSources(payload.query),
+  ]);
+
   if (geminiResult) {
-    const mergedSources = [...geminiResult.extraSources, ...internetSources].slice(
-      0,
-      4
+    const { cleanAnswer, correctedKeyword } = extractGeminiKeywordAndCleanAnswer(
+      geminiResult.answer
     );
+
+    // Jika input pengguna memiliki typo sehingga pencarian awal kurang pas,
+    // gunakan kata kunci hasil koreksi Gemini untuk mengambil referensi yang akurat
+    let finalSources = initialSources;
+    if (
+      correctedKeyword &&
+      initialSources.length <= 2 &&
+      correctedKeyword.toLowerCase() !== normalizeLivestockQuery(payload.query)
+    ) {
+      const refinedSources = await gatherInternetSources(correctedKeyword);
+      if (refinedSources.length > 0) {
+        finalSources = refinedSources;
+      }
+    }
+
     return {
-      answer: cleanAnswerText(geminiResult.answer),
+      answer: cleanAnswer,
       conversation_id: payload.conversation_id || `conv-${Date.now()}`,
       message_id: `msg-${Date.now()}`,
-      sources: mergedSources,
+      sources: [...geminiResult.extraSources, ...finalSources].slice(0, 4),
     };
   }
 
-  // 2. Coba Groq API jika GROQ_API_KEY diatur (Gratis Llama 3.3 70B)
-  const groqAnswer = await tryGroqApi(
-    payload.query,
-    internetSources,
-    env.GROQ_API_KEY
-  );
-  if (groqAnswer) {
-    return {
-      answer: cleanAnswerText(groqAnswer),
-      conversation_id: payload.conversation_id || `conv-${Date.now()}`,
-      message_id: `msg-${Date.now()}`,
-      sources: internetSources,
-    };
-  }
-
-  // 3. Coba Free Public AI tanpa perlu API Key
-  const publicAiAnswer = await tryFreePublicAi(payload.query, internetSources);
-  if (publicAiAnswer) {
-    return {
-      answer: cleanAnswerText(publicAiAnswer),
-      conversation_id: payload.conversation_id || `conv-${Date.now()}`,
-      message_id: `msg-${Date.now()}`,
-      sources: internetSources,
-    };
-  }
-
-  // 4. Fallback sintesis langsung dengan hasil pencarian internet
+  // Fallback lokal instan jika GEMINI_API_KEY belum terpasang atau kuota harian habis
   return {
-    answer: synthesizeAnswerWithInternetSources(payload.query, internetSources),
+    answer: synthesizeAnswerWithInternetSources(payload.query, initialSources),
     conversation_id: payload.conversation_id || `conv-${Date.now()}`,
     message_id: `msg-${Date.now()}`,
-    sources: internetSources,
+    sources: initialSources,
   };
 }
 
