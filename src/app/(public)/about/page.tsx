@@ -3,7 +3,6 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Reveal } from "@/components/ui/Reveal";
 import {
-  GraduationCap,
   Award,
   ShieldCheck,
   CheckCircle,
@@ -16,21 +15,14 @@ export default function AboutPage() {
 
       <main className="flex-1">
         {/* EDITORIAL HEADER / INTRO */}
-        <section className="pt-6 sm:pt-10 pb-8 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
+        <section className="pt-8 sm:pt-10 pb-5 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
           <Reveal>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#EFE8DF] border border-[#DFD3C4] text-[11px] font-bold text-[#6D4226] tracking-wider uppercase">
-              <GraduationCap className="w-3.5 h-3.5 text-[#DE992B]" />
-              Program Riset & Hilirisasi FAPET UB
-            </div>
-          </Reveal>
-
-          <Reveal delayMs={100}>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#361D10] leading-tight tracking-tight max-w-4xl mx-auto">
               Menghubungkan Riset Akademis dengan Peternak Unggas Indonesia
             </h1>
           </Reveal>
 
-          <Reveal delayMs={200}>
+          <Reveal delayMs={100}>
             <p className="text-base sm:text-lg text-[#6C5D53] max-w-3xl mx-auto leading-relaxed">
               TanyaTernak adalah inisiatif berbasis sains dan kecerdasan buatan (AI) terapan yang dikembangkan oleh Fakultas Peternakan Universitas Brawijaya untuk mentransformasikan literatur ilmiah menjadi solusi nyata di lapangan.
             </p>

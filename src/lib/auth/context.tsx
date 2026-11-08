@@ -294,20 +294,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    setUser(null);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("tanyaternak_demo_user");
+      localStorage.removeItem("chickyai_demo_user");
+      localStorage.removeItem("tanyaternak_guest_chat_count");
+      localStorage.removeItem("tanyaternak_guest_quota_v2");
+      document.cookie =
+        "tanyaternak_role=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax";
+      document.cookie =
+        "chickyai_role=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax";
+    }
+
     try {
-      await supabase.auth.signOut();
+      await Promise.race([
+        supabase.auth.signOut(),
+        new Promise((resolve) => setTimeout(resolve, 1200)),
+      ]);
     } catch {
       // Ignored
     }
-    setUser(null);
-    localStorage.removeItem("tanyaternak_demo_user");
-    localStorage.removeItem("chickyai_demo_user");
-    localStorage.removeItem("tanyaternak_guest_chat_count");
-    localStorage.removeItem("tanyaternak_guest_quota_v2");
-    document.cookie = "tanyaternak_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-    document.cookie = "chickyai_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
 
-    router.push("/login");
+    if (typeof window !== "undefined") {
+      window.location.href = "/";
+    } else {
+      router.replace("/");
+    }
   };
 
   return (
