@@ -26,6 +26,62 @@ import {
 
 const MAX_GUEST_CHATS = 3;
 const GUEST_CHAT_STORAGE_KEY = "tanyaternak_guest_quota_v2";
+const GUEST_QUOTA_RESET_MS = 24 * 60 * 60 * 1000; // 24 jam
+
+function readGuestQuota(): number {
+  if (typeof window === "undefined") return 0;
+  localStorage.removeItem("tanyaternak_guest_chat_count");
+  const raw = localStorage.getItem(GUEST_CHAT_STORAGE_KEY);
+  if (!raw) return 0;
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed === "object" && parsed !== null) {
+      const count = Number(parsed.count) || 0;
+      const resetAt = Number(parsed.resetAt) || 0;
+      if (resetAt > 0 && Date.now() >= resetAt) {
+        localStorage.removeItem(GUEST_CHAT_STORAGE_KEY);
+        return 0;
+      }
+      return Math.max(0, count);
+    }
+    if (typeof parsed === "number" && parsed > 0) {
+      const migrated = {
+        count: parsed,
+        resetAt: Date.now() + GUEST_QUOTA_RESET_MS,
+      };
+      localStorage.setItem(GUEST_CHAT_STORAGE_KEY, JSON.stringify(migrated));
+      return parsed;
+    }
+  } catch {
+    localStorage.removeItem(GUEST_CHAT_STORAGE_KEY);
+  }
+  return 0;
+}
+
+function saveGuestQuota(nextCount: number): void {
+  if (typeof window === "undefined") return;
+  let resetAt = Date.now() + GUEST_QUOTA_RESET_MS;
+  try {
+    const existingRaw = localStorage.getItem(GUEST_CHAT_STORAGE_KEY);
+    if (existingRaw) {
+      const existing = JSON.parse(existingRaw);
+      if (
+        existing?.resetAt &&
+        Date.now() < existing.resetAt &&
+        nextCount < MAX_GUEST_CHATS
+      ) {
+        resetAt = existing.resetAt;
+      }
+    }
+  } catch {
+    // Gunakan resetAt 24 jam dari sekarang
+  }
+  localStorage.setItem(
+    GUEST_CHAT_STORAGE_KEY,
+    JSON.stringify({ count: nextCount, resetAt })
+  );
+}
 
 function ChatInner() {
   const searchParams = useSearchParams();
@@ -52,16 +108,11 @@ function ChatInner() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("tanyaternak_guest_chat_count");
-      const savedCount = parseInt(
-        localStorage.getItem(GUEST_CHAT_STORAGE_KEY) || "0",
-        10
-      );
-      if (!isNaN(savedCount) && savedCount >= 0) {
-        setGuestChatCount(savedCount);
-      }
-    }
+    setGuestChatCount(readGuestQuota());
+    const interval = setInterval(() => {
+      setGuestChatCount(readGuestQuota());
+    }, 60 * 1000);
+    return () => clearInterval(interval);
   }, [user]);
 
   useEffect(() => {
@@ -98,11 +149,10 @@ function ChatInner() {
     }
 
     if (!user) {
-      const nextCount = guestChatCount + 1;
+      const currentCount = readGuestQuota();
+      const nextCount = currentCount + 1;
       setGuestChatCount(nextCount);
-      if (typeof window !== "undefined") {
-        localStorage.setItem(GUEST_CHAT_STORAGE_KEY, nextCount.toString());
-      }
+      saveGuestQuota(nextCount);
     }
 
     const userMessage: ChatMessage = {

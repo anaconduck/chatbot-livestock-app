@@ -257,7 +257,7 @@ export default function RisetPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {journals.map((journal, idx) => (
                     <Reveal key={journal.id} delayMs={(idx % 2) * 100}>
-                      <div className="interactive-card bg-[#FFFCF7] rounded-3xl overflow-hidden border border-[#E2D4C3] border-l-4 border-l-[#4A2D1B] hover:border-[#DE992B]/70 shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-full group">
+                      <div className="interactive-card bg-[#FFFCF7] rounded-3xl overflow-hidden border border-[#E2D4C3] hover:border-[#DE992B]/70 shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-full group">
                         <div className="p-6 space-y-3">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex flex-wrap items-center gap-2">
