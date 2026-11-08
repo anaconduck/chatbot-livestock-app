@@ -30,13 +30,60 @@ function cleanGeminiText(raw: string): string {
     .trim();
 }
 
-async function callGeminiEndpoint(
-  endpoint: string,
+let cachedDynamicModel: string | null = null;
+
+/**
+ * Cari otomatis nama model Flash gratis yang aktif di akun Google AI Studio jika model default berubah versi
+ */
+async function discoverAvailableFlashModel(apiKey: string): Promise<string | null> {
+  if (cachedDynamicModel) return cachedDynamicModel;
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(
+        apiKey
+      )}`,
+      { headers: { "x-goog-api-key": apiKey } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const models: Array<{
+      name?: string;
+      supportedGenerationMethods?: string[];
+    }> = data?.models || [];
+
+    const flashModel = models.find(
+      (m) =>
+        m.name &&
+        m.name.includes("gemini") &&
+        m.name.includes("flash") &&
+        !m.name.includes("image") &&
+        !m.name.includes("tts") &&
+        !m.name.includes("audio") &&
+        Array.isArray(m.supportedGenerationMethods) &&
+        m.supportedGenerationMethods.includes("generateContent")
+    );
+
+    if (flashModel?.name) {
+      cachedDynamicModel = flashModel.name.replace(/^models\//, "");
+      return cachedDynamicModel;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function callGeminiModel(
+  modelName: string,
   apiKey: string,
   query: string
 ): Promise<{ answer: string; sources: ChatSource[] }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
+
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(
+    apiKey
+  )}`;
 
   try {
     const res = await fetch(endpoint, {
@@ -134,24 +181,12 @@ export async function sendChatMessage(
     };
   }
 
-  const endpoints = [
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(
-      cleanKey
-    )}`,
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(
-      cleanKey
-    )}`,
-    `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(
-      cleanKey
-    )}`,
-    `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.0-flash-001:generateContent?key=${encodeURIComponent(
-      cleanKey
-    )}`,
-  ];
-
   try {
-    const result = await Promise.any(
-      endpoints.map((ep) => callGeminiEndpoint(ep, cleanKey, payload.query))
+    // 1. Panggil langsung model terbaru sesuai instruksi Google AI Studio (`gemini-3.8-flash`)
+    const result = await callGeminiModel(
+      "gemini-3.8-flash",
+      cleanKey,
+      payload.query
     );
 
     return {
@@ -160,16 +195,31 @@ export async function sendChatMessage(
       message_id: `msg-${Date.now()}`,
       sources: result.sources,
     };
-  } catch (err: unknown) {
-    let errorMsg = "Gagal terhubung ke Google Gemini API.";
-    if (err instanceof AggregateError && err.errors?.length > 0) {
-      errorMsg = err.errors
-        .map((e: Error) => e?.message)
-        .filter(Boolean)
-        .join(" | ");
-    } else if (err instanceof Error) {
-      errorMsg = err.message;
+  } catch (firstErr: unknown) {
+    // 2. Jika nama versi model berubah, deteksi otomatis model Flash gratis yang tersedia di akun
+    try {
+      const discoveredModel = await discoverAvailableFlashModel(cleanKey);
+      if (discoveredModel && discoveredModel !== "gemini-3.8-flash") {
+        const fallbackResult = await callGeminiModel(
+          discoveredModel,
+          cleanKey,
+          payload.query
+        );
+        return {
+          answer: fallbackResult.answer,
+          conversation_id: payload.conversation_id || `conv-${Date.now()}`,
+          message_id: `msg-${Date.now()}`,
+          sources: fallbackResult.sources,
+        };
+      }
+    } catch {
+      // ignore and report primary error
     }
+
+    const errorMsg =
+      firstErr instanceof Error
+        ? firstErr.message
+        : "Gagal terhubung ke Google Gemini API.";
 
     return {
       answer: `[Status Gemini API Error]: ${errorMsg}`,
