@@ -18,25 +18,10 @@ import {
 } from "lucide-react";
 
 const FUN_FACT_MAX_CHARS = 300;
-const FUN_FACT_PREVIEW_CHARS = 245;
 const JOURNAL_MAX_CHARS = 190;
-const JOURNAL_PREVIEW_CHARS = 145;
 
-function getTruncatedText(
-  text: string | undefined,
-  maxChars: number,
-  previewChars: number
-) {
-  const clean = (text || "").trim();
-  if (clean.length <= maxChars) {
-    return { isLong: false, preview: clean, full: clean };
-  }
-  const sliced = clean.slice(0, previewChars);
-  const lastSpace = sliced.lastIndexOf(" ");
-  const preview =
-    (lastSpace > previewChars * 0.7 ? sliced.slice(0, lastSpace) : sliced).trimEnd() +
-    "...";
-  return { isLong: true, preview, full: clean };
+function isDescriptionLong(text: string | undefined, maxChars: number) {
+  return (text || "").trim().length > maxChars;
 }
 
 export default function RisetPage() {
@@ -212,10 +197,9 @@ export default function RisetPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
                   {funFacts.map((fact, idx) => {
                     const isExpanded = !!expandedIds[fact.id];
-                    const { isLong, preview, full } = getTruncatedText(
+                    const isLong = isDescriptionLong(
                       fact.description,
-                      FUN_FACT_MAX_CHARS,
-                      FUN_FACT_PREVIEW_CHARS
+                      FUN_FACT_MAX_CHARS
                     );
 
                     return (
@@ -243,9 +227,9 @@ export default function RisetPage() {
                             </div>
                           )}
 
-                          <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                          <div className="p-6 flex-1 flex flex-col justify-between">
                             <div className="space-y-3">
-                              <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center justify-between gap-2 h-6">
                                 <span
                                   className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${getCategoryBadgeClass(
                                     fact.category,
@@ -261,20 +245,38 @@ export default function RisetPage() {
                                 )}
                               </div>
 
-                              <h3 className="text-base font-bold text-[#361D10] group-hover:text-[#965A2E] transition-colors leading-snug">
+                              <h3
+                                className={`text-base font-bold text-[#361D10] group-hover:text-[#965A2E] transition-colors leading-snug ${
+                                  isExpanded ? "" : "line-clamp-2 h-[44px]"
+                                }`}
+                              >
                                 {fact.title}
                               </h3>
 
-                              <div className="space-y-2">
-                                <p className="text-xs text-[#5F4F45] leading-relaxed whitespace-pre-line">
-                                  {isExpanded ? full : preview}
+                              <div
+                                className={
+                                  isExpanded
+                                    ? "space-y-2"
+                                    : "h-[117px] flex flex-col justify-between"
+                                }
+                              >
+                                <p
+                                  className={`text-xs text-[#5F4F45] leading-relaxed whitespace-pre-line ${
+                                    isExpanded
+                                      ? ""
+                                      : isLong
+                                        ? "line-clamp-5"
+                                        : "line-clamp-6"
+                                  }`}
+                                >
+                                  {fact.description}
                                 </p>
 
                                 {isLong && (
                                   <button
                                     type="button"
                                     onClick={() => toggleExpand(fact.id)}
-                                    className="inline-flex items-center gap-1 text-xs font-bold text-[#A86F15] hover:text-[#4A2D1B] transition-colors cursor-pointer pt-0.5"
+                                    className="inline-flex items-center gap-1 text-xs font-bold text-[#A86F15] hover:text-[#4A2D1B] transition-colors cursor-pointer h-[19.5px] leading-none self-start"
                                   >
                                     <span>
                                       {isExpanded ? "Sembunyikan" : "Selengkapnya"}
@@ -332,17 +334,16 @@ export default function RisetPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                   {journals.map((journal, idx) => {
                     const isExpanded = !!expandedIds[journal.id];
-                    const { isLong, preview, full } = getTruncatedText(
+                    const isLong = isDescriptionLong(
                       journal.description,
-                      JOURNAL_MAX_CHARS,
-                      JOURNAL_PREVIEW_CHARS
+                      JOURNAL_MAX_CHARS
                     );
 
                     return (
                       <Reveal key={journal.id} delayMs={(idx % 2) * 100}>
                         <div className="interactive-card bg-[#FFFCF7] rounded-3xl overflow-hidden border border-[#E2D4C3] hover:border-[#DE992B]/70 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
                           <div className="p-6 space-y-3">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex flex-wrap items-center justify-between gap-2 min-h-[24px]">
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#EAF5EA] text-[#2E7D32] border border-[#C8E6C9] text-[10px] font-bold">
                                   <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]" />
@@ -359,20 +360,38 @@ export default function RisetPage() {
                               </div>
                             </div>
 
-                            <h3 className="text-base sm:text-lg font-bold text-[#361D10] group-hover:text-[#965A2E] transition-colors leading-snug pt-0.5">
+                            <h3
+                              className={`text-base sm:text-lg font-bold text-[#361D10] group-hover:text-[#965A2E] transition-colors leading-snug pt-0.5 ${
+                                isExpanded ? "" : "line-clamp-2 h-[50px]"
+                              }`}
+                            >
                               {journal.title}
                             </h3>
 
-                            <div className="space-y-2">
-                              <p className="text-xs text-[#5F4F45] leading-relaxed whitespace-pre-line">
-                                {isExpanded ? full : preview}
+                            <div
+                              className={
+                                isExpanded
+                                  ? "space-y-2"
+                                  : "h-[58.5px] flex flex-col justify-between"
+                              }
+                            >
+                              <p
+                                className={`text-xs text-[#5F4F45] leading-relaxed whitespace-pre-line ${
+                                  isExpanded
+                                    ? ""
+                                    : isLong
+                                      ? "line-clamp-2"
+                                      : "line-clamp-3"
+                                }`}
+                              >
+                                {journal.description}
                               </p>
 
                               {isLong && (
                                 <button
                                   type="button"
                                   onClick={() => toggleExpand(journal.id)}
-                                  className="inline-flex items-center gap-1 text-xs font-bold text-[#A86F15] hover:text-[#4A2D1B] transition-colors cursor-pointer pt-0.5"
+                                  className="inline-flex items-center gap-1 text-xs font-bold text-[#A86F15] hover:text-[#4A2D1B] transition-colors cursor-pointer h-[19.5px] leading-none self-start"
                                 >
                                   <span>
                                     {isExpanded ? "Sembunyikan" : "Selengkapnya"}
