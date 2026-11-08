@@ -3,7 +3,6 @@ import dns from "node:dns";
 import { getServerEnv } from "@/lib/env";
 import type { ChatSource } from "@/types";
 
-// Paksa Node.js menggunakan jalur IPv4 terlebih dahulu agar tidak nyangkut (hang) pada jaringan IPv6 lokal
 try {
   dns.setDefaultResultOrder("ipv4first");
 } catch {
@@ -50,104 +49,106 @@ function parseErrorMessage(status: number, rawBody: string): string {
   return `HTTP ${status}`;
 }
 
+let cachedAvailableModels: string[] | null = null;
+
 /**
- * Jalur 1: Gemini Interactions API (`/v1beta/interactions`) — direkomendasikan Google untuk `gemini-3.8-flash`
+ * Ambil daftar model resmi dari Google AI Studio yang aktif untuk API Key ini
  */
-async function callGeminiInteractionsApi(
-  apiKey: string,
-  query: string
-): Promise<{ answer: string; sources: ChatSource[] }> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60000);
+async function getAvailableGeminiModels(apiKey: string): Promise<string[]> {
+  if (cachedAvailableModels && cachedAvailableModels.length > 0) {
+    return cachedAvailableModels;
+  }
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/interactions?key=${encodeURIComponent(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(
         apiKey
       )}`,
       {
-        method: "POST",
         signal: controller.signal,
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          model: "gemini-3.8-flash",
-          system_instruction: SYSTEM_INSTRUCTION,
-          input: query,
-        }),
+        headers: { "x-goog-api-key": apiKey },
       }
     );
-
-    const rawBody = await res.text();
-    if (!res.ok) {
-      throw new Error(parseErrorMessage(res.status, rawBody));
-    }
-
-    const data = JSON.parse(rawBody);
-    let extractedText = "";
-
-    if (typeof data?.output_text === "string" && data.output_text.trim()) {
-      extractedText = data.output_text.trim();
-    } else if (Array.isArray(data?.outputs)) {
-      extractedText = data.outputs
-        .filter((o: { type?: string; text?: string }) => o?.type === "text" || typeof o?.text === "string")
-        .map((o: { text?: string }) => o.text || "")
-        .join("\n")
-        .trim();
-    } else if (Array.isArray(data?.steps)) {
-      const texts: string[] = [];
-      for (const step of data.steps) {
-        if (typeof step?.text === "string") texts.push(step.text);
-        const parts = step?.content?.parts || step?.output?.parts || [];
-        if (Array.isArray(parts)) {
-          for (const p of parts) {
-            if (!p?.thought && typeof p?.text === "string") {
-              texts.push(p.text);
-            }
-          }
-        }
-      }
-      extractedText = texts.join("\n").trim();
-    }
-
-    if (!extractedText) {
-      throw new Error("Respons Interactions API kosong.");
-    }
-
-    return {
-      answer: cleanGeminiText(extractedText),
-      sources: [],
-    };
-  } finally {
     clearTimeout(timeout);
+
+    if (!res.ok) return [];
+    const data = await res.json();
+    const models: Array<{
+      name?: string;
+      supportedGenerationMethods?: string[];
+    }> = data?.models || [];
+
+    const textModels = models
+      .filter((m) => {
+        const n = (m.name || "").toLowerCase();
+        const methods = m.supportedGenerationMethods || [];
+        return (
+          methods.includes("generateContent") &&
+          (n.includes("gemini") || n.includes("gemma")) &&
+          !n.includes("embedding") &&
+          !n.includes("imagen") &&
+          !n.includes("image") &&
+          !n.includes("tts") &&
+          !n.includes("audio") &&
+          !n.includes("vision") &&
+          !n.includes("aqa")
+        );
+      })
+      .map((m) => (m.name || "").replace(/^models\//, ""));
+
+    // Urutkan agar model flash-lite / flash yang paling ringan & jarang antre (503) berada di urutan teratas
+    textModels.sort((a, b) => {
+      const score = (name: string) => {
+        if (name.includes("3.8") && name.includes("lite")) return 1;
+        if (name.includes("flash-lite")) return 2;
+        if (name.includes("3.8-flash")) return 3;
+        if (name.includes("3.5-flash")) return 4;
+        if (name.includes("flash")) return 5;
+        if (name.includes("gemma-3-27b")) return 6;
+        if (name.includes("pro")) return 7;
+        return 8;
+      };
+      return score(a) - score(b);
+    });
+
+    if (textModels.length > 0) {
+      cachedAvailableModels = textModels;
+    }
+    return textModels;
+  } catch {
+    return [];
   }
 }
 
-/**
- * Jalur 2: Gemini generateContent API (`/v1beta/models/gemini-3.8-flash:generateContent`) dengan thinkingLevel LOW
- */
-async function callGeminiGenerateContent(
+async function callSingleGeminiModel(
+  modelName: string,
   apiKey: string,
   query: string
 ): Promise<{ answer: string; sources: ChatSource[] }> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60000);
+  const timeout = setTimeout(() => controller.abort(), 18000);
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(
+  const isGemma = modelName.toLowerCase().startsWith("gemma");
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(
     apiKey
   )}`;
 
-  try {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
-      },
-      body: JSON.stringify({
+  const payload = isGemma
+    ? {
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: `${SYSTEM_INSTRUCTION}\n\nPertanyaan: ${query}` }],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: 1000,
+        },
+      }
+    : {
         systemInstruction: {
           parts: [{ text: SYSTEM_INSTRUCTION }],
         },
@@ -159,17 +160,24 @@ async function callGeminiGenerateContent(
         ],
         generationConfig: {
           temperature: 0.4,
-          maxOutputTokens: 1200,
-          thinkingConfig: {
-            thinkingLevel: "low",
-          },
+          maxOutputTokens: 1000,
         },
-      }),
+      };
+
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
+      body: JSON.stringify(payload),
     });
 
     const rawBody = await res.text();
     if (!res.ok) {
-      throw new Error(parseErrorMessage(res.status, rawBody));
+      throw new Error(`[${modelName}] ${parseErrorMessage(res.status, rawBody)}`);
     }
 
     const data = JSON.parse(rawBody);
@@ -187,7 +195,7 @@ async function callGeminiGenerateContent(
         .trim();
 
     if (!text) {
-      throw new Error("Respons kosong dari Gemini generateContent.");
+      throw new Error(`[${modelName}] Respons kosong.`);
     }
 
     return {
@@ -215,12 +223,21 @@ export async function sendChatMessage(
     };
   }
 
+  // Ambil daftar model resmi Google yang tersedia di akun ini
+  const discoveredModels = await getAvailableGeminiModels(cleanKey);
+  const candidateModels =
+    discoveredModels.length > 0
+      ? discoveredModels.slice(0, 4)
+      : ["gemini-3.8-flash-lite", "gemini-3.8-flash", "gemma-3-27b-it"];
+
   try {
-    // Jalankan Interactions API & generateContent (thinkingLevel LOW) secara paralel, ambil yang paling cepat selesai
-    const result = await Promise.any([
-      callGeminiInteractionsApi(cleanKey, payload.query),
-      callGeminiGenerateContent(cleanKey, payload.query),
-    ]);
+    // Panggil kandidat model Google secara paralel sehingga jika `gemini-3.8-flash` sedang penuh (503 High Demand),
+    // model pendamping resmi di akun Google AI Studio Anda langsung menjawab dalam 1-2 detik!
+    const result = await Promise.any(
+      candidateModels.map((model) =>
+        callSingleGeminiModel(model, cleanKey, payload.query)
+      )
+    );
 
     return {
       answer: result.answer,
