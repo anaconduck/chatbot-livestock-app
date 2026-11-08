@@ -302,6 +302,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     localStorage.removeItem("tanyaternak_demo_user");
     localStorage.removeItem("chickyai_demo_user");
+    localStorage.removeItem("tanyaternak_guest_chat_count");
+    localStorage.removeItem("tanyaternak_guest_quota_v2");
     document.cookie = "tanyaternak_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
     document.cookie = "chickyai_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
 

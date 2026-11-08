@@ -246,14 +246,23 @@ function buildSystemInstruction(sources: ChatSource[]): string {
     .join("\n\n");
 
   return `Anda adalah ChickAI Assistant, asisten virtual pintar dari platform TanyaTernak (Fakultas Peternakan Universitas Brawijaya).
-Tugas Anda adalah menjawab pertanyaan pengguna seputar peternakan (unggas, ayam petelur/pedaging, pakan & nutrisi, penyakit & biosekuriti, manajemen kandang, maupun ilmu peternakan umum) secara akurat, jelas, ramah, dan terstruktur dalam Bahasa Indonesia.
+Tugas Anda adalah menjawab pertanyaan pengguna seputar peternakan secara akurat, jelas, ramah, dan terstruktur dalam Bahasa Indonesia.
 
 Gunakan wawasan ilmiah serta konteks referensi internet berikut sebagai rujukan pendukung:
 ${sourcesContext}
 
 Aturan jawaban:
 1. Berikan penjelasan yang langsung menjawab inti pertanyaan dengan poin-poin praktis.
-2. Di bagian akhir jawaban, cantumkan sub-bagian singkat "Referensi Sumber:" yang menyebutkan sumber rujukan dari daftar di atas.`;
+2. Gunakan teks polos yang rapi tanpa simbol bintang markdown (**).
+3. JANGAN menuliskan bagian "Referensi Sumber:" atau daftar tautan di akhir jawaban teks, karena daftar referensi sudah ditampilkan secara terpisah di bawah kotak pesan.`;
+}
+
+function cleanAnswerText(raw: string): string {
+  return raw
+    .replace(/\n*(?:Referensi Sumber|Sumber Referensi|Daftar Referensi|Referensi)\s*:[\s\S]*$/i, "")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/^#{1,4}\s+/gm, "")
+    .trim();
 }
 
 /**
@@ -420,51 +429,45 @@ function synthesizeAnswerWithInternetSources(
   sources: ChatSource[]
 ): string {
   const q = query.toLowerCase();
-  let coreAnswer = "";
 
   if (q.includes("pakan") || q.includes("nutrisi") || q.includes("kalsium") || q.includes("protein") || q.includes("ransum")) {
-    coreAnswer =
+    return (
       "Dalam manajemen nutrisi dan pakan peternakan, keseimbangan antara energi metabolis, protein kasar, asam amino esensial (metionin & lisin), serta mineral makro sangat menentukan performa produksi:\n\n" +
-      "1. **Kebutuhan Protein & Energi:** Ayam petelur (layer) fase produksi membutuhkan sekitar 16–18% protein kasar dengan energi metabolis 2.750–2.850 kkal/kg, sedangkan ayam pedaging (broiler) fase starter membutuhkan 21–23% protein kasar.\n" +
-      "2. **Kalsium & Fosfor:** Pada fase puncak produksi telur, kadar kalsium ransum wajib dijaga pada kisaran 3,8–4,2% dengan fosfor tersedia 0,40–0,45% untuk mencegah kerabang telur tipis atau retak.\n" +
-      "3. **Manajemen Pemberian:** Pastikan ukuran partikel pakan seragam dan ketersediaan air minum bersih selalu mencukupi (2 kali lipat konsumsi pakan).";
-  } else if (q.includes("penyakit") || q.includes("vaksin") || q.includes("biosekuriti") || q.includes("nd") || q.includes("ai") || q.includes("virus")) {
-    coreAnswer =
-      "Pengendalian penyakit dan kesehatan ternak bertumpu pada kombinasi protokol biosekuriti berjenjang dan program vaksinasi terjadwal:\n\n" +
-      "1. **Biosekuriti 3 Zona:** Pisahkan secara ketat Zona Merah (area luar), Zona Kuning (area transisi/sanitasi kendaraan & staf), dan Zona Hijau (area kandang produksi).\n" +
-      "2. **Mitigasi Penyakit Utama (ND, AI, IB, Coryza):** Lakukan vaksinasi sesuai titer antibodi dan umur ternak, disertai desinfeksi rutin kandang serta masa istirahat kandang (*downtime*) minimal 14 hari antar siklus.\n" +
-      "3. **Isolasi Dini:** Ternak yang menunjukkan gejala klinis (lesu, penurunan nafsu makan, gangguan pernapasan) harus segera dipisahkan ke kandang karantina.";
-  } else if (q.includes("suhu") || q.includes("kandang") || q.includes("closed") || q.includes("amonia") || q.includes("ventilasi")) {
-    coreAnswer =
-      "Pengaturan mikroklimat kandang (khususnya sistem *closed-house* di iklim tropis) bertujuan menjaga ternak tetap berada pada zona nyaman (*thermoneutral zone*):\n\n" +
-      "1. **Suhu & Kelembaban Efektif:** Suhu optimal ternak dewasa berkisar antara 20–25°C dengan kelembaban relatif (RH) 60–70%.\n" +
-      "2. **Kecepatan Angin (*Wind Speed*):** Gunakan *tunnel ventilation* dengan kecepatan angin 2,0–2,5 m/detik untuk memberikan efek dingin (*wind chill effect*) saat suhu lingkungan meningkat.\n" +
-      "3. **Kualitas Udara:** Jaga kadar amonia (NH₃) di bawah 20 ppm dan karbon dioksida (CO₂) di bawah 3.000 ppm dengan menjaga sekam (*litter*) tetap kering.";
-  } else {
-    const snippetSummary = sources
-      .filter((s) => s.snippet)
-      .slice(0, 2)
-      .map((s) => `• **${s.title}:** ${s.snippet}`)
-      .join("\n");
-
-    coreAnswer =
-      `Berikut adalah penjelasan mengenai **"${query}"** berdasarkan literatur peternakan dan penelusuran referensi internet:\n\n` +
-      (snippetSummary
-        ? `${snippetSummary}\n\n`
-        : "") +
-      "Dalam praktik peternakan modern, keberhasilan pemeliharaan ditentukan oleh tiga pilar utama: bibit unggul (*breeding*), nutrisi pakan berimbang (*feeding*), serta tata laksana manajemen kandang dan kesehatan (*management*).";
+      "1. Kebutuhan Protein & Energi: Ayam petelur (layer) fase produksi membutuhkan sekitar 16–18% protein kasar dengan energi metabolis 2.750–2.850 kkal/kg, sedangkan ayam pedaging (broiler) fase starter membutuhkan 21–23% protein kasar.\n" +
+      "2. Kalsium & Fosfor: Pada fase puncak produksi telur, kadar kalsium ransum wajib dijaga pada kisaran 3,8–4,2% dengan fosfor tersedia 0,40–0,45% untuk mencegah kerabang telur tipis atau retak.\n" +
+      "3. Manajemen Pemberian: Pastikan ukuran partikel pakan seragam dan ketersediaan air minum bersih selalu mencukupi (2 kali lipat konsumsi pakan)."
+    );
   }
 
-  const refLines = sources
-    .map(
-      (s, idx) =>
-        `${idx + 1}. ${s.title} (${s.sourceName || "Referensi Internet"})${
-          s.url ? ` — ${s.url}` : ""
-        }`
-    )
+  if (q.includes("penyakit") || q.includes("vaksin") || q.includes("biosekuriti") || q.includes("nd") || q.includes("ai") || q.includes("virus")) {
+    return (
+      "Pengendalian penyakit dan kesehatan ternak bertumpu pada kombinasi protokol biosekuriti berjenjang dan program vaksinasi terjadwal:\n\n" +
+      "1. Biosekuriti 3 Zona: Pisahkan secara ketat Zona Merah (area luar), Zona Kuning (area transisi/sanitasi kendaraan & staf), dan Zona Hijau (area kandang produksi).\n" +
+      "2. Mitigasi Penyakit Utama (ND, AI, IB, Coryza): Lakukan vaksinasi sesuai titer antibodi dan umur ternak, disertai desinfeksi rutin kandang serta masa istirahat kandang (downtime) minimal 14 hari antar siklus.\n" +
+      "3. Isolasi Dini: Ternak yang menunjukkan gejala klinis (lesu, penurunan nafsu makan, gangguan pernapasan) harus segera dipisahkan ke kandang karantina."
+    );
+  }
+
+  if (q.includes("suhu") || q.includes("kandang") || q.includes("closed") || q.includes("amonia") || q.includes("ventilasi")) {
+    return (
+      "Pengaturan mikroklimat kandang (khususnya sistem closed-house di iklim tropis) bertujuan menjaga ternak tetap berada pada zona nyaman (thermoneutral zone):\n\n" +
+      "1. Suhu & Kelembaban Efektif: Suhu optimal ternak dewasa berkisar antara 20–25°C dengan kelembaban relatif (RH) 60–70%.\n" +
+      "2. Kecepatan Angin (Wind Speed): Gunakan tunnel ventilation dengan kecepatan angin 2,0–2,5 m/detik untuk memberikan efek dingin (wind chill effect) saat suhu lingkungan meningkat.\n" +
+      "3. Kualitas Udara: Jaga kadar amonia (NH3) di bawah 20 ppm dan karbon dioksida (CO2) di bawah 3.000 ppm dengan menjaga sekam (litter) tetap kering."
+    );
+  }
+
+  const snippetSummary = sources
+    .filter((s) => s.snippet)
+    .slice(0, 2)
+    .map((s) => `• ${s.title}: ${s.snippet}`)
     .join("\n");
 
-  return `${coreAnswer}\n\nReferensi Sumber:\n${refLines}`;
+  return (
+    `Berikut adalah penjelasan mengenai "${query}" berdasarkan literatur peternakan dan penelusuran referensi internet:\n\n` +
+    (snippetSummary ? `${snippetSummary}\n\n` : "") +
+    "Dalam praktik peternakan modern, keberhasilan pemeliharaan ditentukan oleh tiga pilar utama: bibit unggul (breeding), nutrisi pakan berimbang (feeding), serta tata laksana manajemen kandang dan kesehatan (management)."
+  );
 }
 
 export async function sendChatMessage(
@@ -485,7 +488,7 @@ export async function sendChatMessage(
       4
     );
     return {
-      answer: geminiResult.answer,
+      answer: cleanAnswerText(geminiResult.answer),
       conversation_id: payload.conversation_id || `conv-${Date.now()}`,
       message_id: `msg-${Date.now()}`,
       sources: mergedSources,
@@ -500,7 +503,7 @@ export async function sendChatMessage(
   );
   if (groqAnswer) {
     return {
-      answer: groqAnswer,
+      answer: cleanAnswerText(groqAnswer),
       conversation_id: payload.conversation_id || `conv-${Date.now()}`,
       message_id: `msg-${Date.now()}`,
       sources: internetSources,
@@ -511,7 +514,7 @@ export async function sendChatMessage(
   const publicAiAnswer = await tryFreePublicAi(payload.query, internetSources);
   if (publicAiAnswer) {
     return {
-      answer: publicAiAnswer,
+      answer: cleanAnswerText(publicAiAnswer),
       conversation_id: payload.conversation_id || `conv-${Date.now()}`,
       message_id: `msg-${Date.now()}`,
       sources: internetSources,

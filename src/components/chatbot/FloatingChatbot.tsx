@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth/context";
 import type { ChatMessage } from "@/types";
 
 const MAX_GUEST_CHATS = 3;
-const GUEST_CHAT_STORAGE_KEY = "tanyaternak_guest_chat_count";
+const GUEST_CHAT_STORAGE_KEY = "tanyaternak_guest_quota_v2";
 
 export const FloatingChatbot: React.FC = () => {
   const pathname = usePathname();
@@ -47,15 +47,17 @@ export const FloatingChatbot: React.FC = () => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      // Hapus key kuota lama agar kuota mode tamu ter-reset ke 0/3
+      localStorage.removeItem("tanyaternak_guest_chat_count");
       const savedCount = parseInt(
         localStorage.getItem(GUEST_CHAT_STORAGE_KEY) || "0",
         10
       );
-      if (!isNaN(savedCount) && savedCount > 0) {
+      if (!isNaN(savedCount) && savedCount >= 0) {
         setGuestChatCount(savedCount);
       }
     }
-  }, []);
+  }, [user]);
 
   // When drawer opens, always scroll to top if only greeting exists
   useEffect(() => {
@@ -397,16 +399,17 @@ export const FloatingChatbot: React.FC = () => {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              disabled={isLoading || isGuestLimitReached}
               placeholder={
                 isGuestLimitReached
-                  ? "Login sebagai pengguna untuk lanjut chat..."
-                  : "Tanyakan seputar ayam & pakan..."
+                  ? "Kuota 3x habis — silakan login untuk lanjut chat..."
+                  : "Tanyakan seputar peternakan & pakan..."
               }
-              className="flex-1 bg-[#FAF7F2] border border-[#E5DACD] focus:border-[#DE992B] rounded-xl px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-[#2C1D13] outline-none"
+              className="flex-1 bg-[#FAF7F2] border border-[#E5DACD] focus:border-[#DE992B] disabled:opacity-60 disabled:cursor-not-allowed rounded-xl px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-[#2C1D13] outline-none"
             />
             <button
               type="submit"
-              disabled={isLoading || !input.trim()}
+              disabled={isLoading || isGuestLimitReached || !input.trim()}
               className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#4E2E1E] hover:bg-[#3D2113] disabled:opacity-50 text-white flex items-center justify-center transition-all shrink-0 shadow-sm"
               aria-label="Kirim Pesan"
             >

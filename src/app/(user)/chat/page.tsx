@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 
 const MAX_GUEST_CHATS = 3;
-const GUEST_CHAT_STORAGE_KEY = "tanyaternak_guest_chat_count";
+const GUEST_CHAT_STORAGE_KEY = "tanyaternak_guest_quota_v2";
 
 function ChatInner() {
   const searchParams = useSearchParams();
@@ -53,15 +53,16 @@ function ChatInner() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      localStorage.removeItem("tanyaternak_guest_chat_count");
       const savedCount = parseInt(
         localStorage.getItem(GUEST_CHAT_STORAGE_KEY) || "0",
         10
       );
-      if (!isNaN(savedCount) && savedCount > 0) {
+      if (!isNaN(savedCount) && savedCount >= 0) {
         setGuestChatCount(savedCount);
       }
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -492,12 +493,17 @@ function ChatInner() {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Tuliskan pertanyaan seputar ayam, pakan, penyakit, atau kandang..."
-                className="flex-1 bg-[#FAF7F2] border border-[#E2D5C7] focus:border-[#4A2D1B] focus:ring-1 focus:ring-[#4A2D1B] rounded-2xl px-4 py-3.5 text-sm text-[#2C1D13] outline-none shadow-xs transition-colors"
+                disabled={isLoading || isGuestLimitReached}
+                placeholder={
+                  isGuestLimitReached
+                    ? "Kuota 3x chat tamu habis — silakan login untuk melanjutkan..."
+                    : "Tuliskan pertanyaan seputar peternakan, pakan, penyakit, atau kandang..."
+                }
+                className="flex-1 bg-[#FAF7F2] border border-[#E2D5C7] focus:border-[#4A2D1B] focus:ring-1 focus:ring-[#4A2D1B] disabled:opacity-60 disabled:cursor-not-allowed rounded-2xl px-4 py-3.5 text-sm text-[#2C1D13] outline-none shadow-xs transition-colors"
               />
               <button
                 type="submit"
-                disabled={isLoading || !input.trim()}
+                disabled={isLoading || isGuestLimitReached || !input.trim()}
                 className="px-5 py-3.5 rounded-2xl bg-[#4A2D1B] hover:bg-[#382112] disabled:opacity-50 text-white font-bold text-sm flex items-center gap-2 shadow-sm transition-all active:scale-95 shrink-0"
               >
                 <span>Kirim</span>
