@@ -79,7 +79,7 @@ async function callGeminiModel(
   query: string
 ): Promise<{ answer: string; sources: ChatSource[] }> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
+  const timeout = setTimeout(() => controller.abort(), 35000);
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(
     apiKey
@@ -105,7 +105,7 @@ async function callGeminiModel(
         ],
         generationConfig: {
           temperature: 0.4,
-          maxOutputTokens: 800,
+          maxOutputTokens: 1500,
         },
       }),
     });
@@ -125,11 +125,18 @@ async function callGeminiModel(
     }
 
     const data = JSON.parse(rawBody);
+    const parts: Array<{ text?: string; thought?: boolean }> =
+      data?.candidates?.[0]?.content?.parts || [];
     const text =
-      data?.candidates?.[0]?.content?.parts
-        ?.map((p: { text?: string }) => p.text || "")
+      parts
+        .filter((p) => !p.thought)
+        .map((p) => p.text || "")
         .join("")
-        .trim() || "";
+        .trim() ||
+      parts
+        .map((p) => p.text || "")
+        .join("")
+        .trim();
 
     if (!text) {
       throw new Error("Respons kosong dari Gemini API.");
