@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
 import { useAuth } from "@/lib/auth/context";
-import type { KnowledgeDocument } from "@/types";
 import {
   ShieldCheck,
   Download,
@@ -25,46 +24,49 @@ interface DailyVisitPoint {
   visits: number;
 }
 
+const ADMIN_STATS_CACHE_KEY = "tanyaternak_admin_stats_cache";
+
 export default function AdminDashboardPage() {
   const { user, logout } = useAuth();
 
-  const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
   const [stats, setStats] = useState<{
     totalVisits: number;
     totalDocuments: number;
+    funFactsCount: number;
+    journalsCount: number;
     totalUsers: number;
     dailyVisits: DailyVisitPoint[];
   }>({
     totalVisits: 0,
     totalDocuments: 0,
+    funFactsCount: 0,
+    journalsCount: 0,
     totalUsers: 0,
     dailyVisits: [],
   });
 
   const loadData = async () => {
     try {
-      const [docsRes, statsRes] = await Promise.all([
-        fetch("/api/admin/documents", { cache: "no-store" }),
-        fetch("/api/admin/stats", { cache: "no-store" }),
-      ]);
-
-      let loadedDocs: KnowledgeDocument[] = [];
-      if (docsRes.ok) {
-        const docsData = await docsRes.json();
-        loadedDocs = docsData.documents || [];
-        setDocuments(loadedDocs);
-      }
-
+      const statsRes = await fetch("/api/admin/stats", { cache: "no-store" });
       if (statsRes.ok) {
         const statsData = await statsRes.json();
-        setStats({
+        const nextStats = {
           totalVisits: statsData.totalVisits || 0,
           totalUsers: statsData.totalUsers || 0,
-          totalDocuments: loadedDocs.length,
+          totalDocuments: statsData.totalDocuments || 0,
+          funFactsCount: statsData.funFactsCount || 0,
+          journalsCount: statsData.journalsCount || 0,
           dailyVisits: Array.isArray(statsData.dailyVisits)
             ? statsData.dailyVisits
             : [],
-        });
+        };
+        setStats(nextStats);
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem(
+            ADMIN_STATS_CACHE_KEY,
+            JSON.stringify(nextStats)
+          );
+        }
       }
     } catch (err) {
       console.error("Gagal memuat data admin:", err);
@@ -72,15 +74,21 @@ export default function AdminDashboardPage() {
   };
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(ADMIN_STATS_CACHE_KEY);
+      if (cached) {
+        try {
+          setStats(JSON.parse(cached));
+        } catch {
+          // ignore
+        }
+      }
+    }
     loadData();
   }, []);
 
-  const funFactsCount = documents.filter(
-    (d) => d.content_type === "FUN_FACT"
-  ).length;
-  const journalsCount = documents.filter(
-    (d) => d.content_type !== "FUN_FACT"
-  ).length;
+  const funFactsCount = stats.funFactsCount;
+  const journalsCount = stats.journalsCount;
 
   const maxDailyVisits = Math.max(
     ...stats.dailyVisits.map((d) => d.visits),
@@ -157,7 +165,7 @@ export default function AdminDashboardPage() {
             className="px-4 py-2.5 text-[#6E5D52] hover:text-[#4A2D1B] flex items-center gap-2 whitespace-nowrap"
           >
             <FileText className="w-4 h-4" />
-            Kelola Konten Riset & Edukasi ({documents.length})
+            Kelola Konten Riset & Edukasi ({stats.totalDocuments})
           </Link>
           <Link
             href="/admin/users"

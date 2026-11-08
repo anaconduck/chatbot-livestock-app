@@ -77,22 +77,34 @@ export async function GET() {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     sevenDaysAgo.setHours(0, 0, 0, 0);
 
-    const [viewsCountRes, recentViewsRes, profilesRes, docsRes] = await Promise.all([
-      adminClient.from("page_views").select("*", { count: "exact", head: true }),
-      adminClient
-        .from("page_views")
-        .select("created_at")
-        .gte("created_at", sevenDaysAgo.toISOString()),
-      adminClient.from("profiles").select("*", { count: "exact", head: true }),
-      adminClient.from("documents").select("*", { count: "exact", head: true }),
-    ]);
+    const [viewsCountRes, recentViewsRes, profilesRes, funFactsRes, journalsRes] =
+      await Promise.all([
+        adminClient.from("page_views").select("*", { count: "exact", head: true }),
+        adminClient
+          .from("page_views")
+          .select("created_at")
+          .gte("created_at", sevenDaysAgo.toISOString()),
+        adminClient.from("profiles").select("*", { count: "exact", head: true }),
+        adminClient
+          .from("documents")
+          .select("*", { count: "exact", head: true })
+          .eq("content_type", "FUN_FACT"),
+        adminClient
+          .from("documents")
+          .select("*", { count: "exact", head: true })
+          .neq("content_type", "FUN_FACT"),
+      ]);
 
     const dailyVisits = buildLast7DaysBuckets(recentViewsRes.data || []);
+    const funFactsCount = funFactsRes.count ?? 0;
+    const journalsCount = journalsRes.count ?? 0;
 
     return NextResponse.json({
       totalVisits: viewsCountRes.count ?? 0,
       totalUsers: profilesRes.count ?? 0,
-      totalDocuments: docsRes.count ?? 0,
+      totalDocuments: funFactsCount + journalsCount,
+      funFactsCount,
+      journalsCount,
       dailyVisits,
     });
   } catch (error: unknown) {

@@ -24,6 +24,18 @@ export default function RisetPage() {
     // Hapus sisa data simulasi lama di browser jika ada
     if (typeof window !== "undefined") {
       localStorage.removeItem("tanyaternak_riset_documents");
+      const cachedDocs = sessionStorage.getItem("tanyaternak_riset_cache");
+      if (cachedDocs) {
+        try {
+          const parsed = JSON.parse(cachedDocs);
+          if (Array.isArray(parsed)) {
+            setDocuments(parsed);
+            setIsLoading(false);
+          }
+        } catch {
+          // ignore
+        }
+      }
     }
 
     const fetchDocuments = async () => {
@@ -33,6 +45,12 @@ export default function RisetPage() {
           const data = await res.json();
           if (Array.isArray(data.documents)) {
             setDocuments(data.documents);
+            if (typeof window !== "undefined") {
+              sessionStorage.setItem(
+                "tanyaternak_riset_cache",
+                JSON.stringify(data.documents)
+              );
+            }
           }
         }
       } catch {

@@ -22,6 +22,7 @@ import {
   Link2,
   ExternalLink,
   Image as ImageIcon,
+  AlertTriangle,
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -61,6 +62,11 @@ export default function AdminDocumentsPage() {
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
 
   // Form State
@@ -78,7 +84,12 @@ export default function AdminDocumentsPage() {
       const res = await fetch("/api/admin/documents", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
-        setDocuments(data.documents || []);
+        const docs = data.documents || [];
+        setDocuments(docs);
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("tanyaternak_riset_cache", JSON.stringify(docs));
+          sessionStorage.removeItem("tanyaternak_admin_stats_cache");
+        }
       }
     } catch (err) {
       console.error("Gagal memuat konten:", err);
@@ -88,6 +99,20 @@ export default function AdminDocumentsPage() {
   };
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem("tanyaternak_riset_cache");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            setDocuments(parsed);
+            setIsLoading(false);
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
     loadDocuments();
   }, []);
 
@@ -157,23 +182,22 @@ export default function AdminDocumentsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (
-      !confirm(
-        "Apakah Anda yakin ingin menghapus konten ini dari database [Riset & Edukasi]?"
-      )
-    )
-      return;
+  const confirmDelete = async () => {
+    if (!deleteTarget || isDeleting) return;
+    setIsDeleting(true);
 
     try {
-      const res = await fetch(`/api/admin/documents?id=${id}`, {
+      const res = await fetch(`/api/admin/documents?id=${deleteTarget.id}`, {
         method: "DELETE",
       });
 
       if (res.ok) {
-        setDocuments((prev) => prev.filter((d) => d.id !== id));
+        setDocuments((prev) => prev.filter((d) => d.id !== deleteTarget.id));
         toast.success("Konten berhasil dihapus dari [Riset & Edukasi].");
-        setNotification("Konten berhasil dihapus dari [Riset & Edukasi].");
+        setNotification(
+          `Konten "${deleteTarget.title}" berhasil dihapus dari [Riset & Edukasi].`
+        );
+        setDeleteTarget(null);
         setTimeout(() => setNotification(null), 3000);
       } else {
         const err = await res.json();
@@ -182,6 +206,8 @@ export default function AdminDocumentsPage() {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Terjadi kesalahan";
       toast.error(`Gagal: ${message}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -405,8 +431,10 @@ export default function AdminDocumentsPage() {
                       </td>
                       <td className="py-4 px-3 text-right">
                         <button
-                          onClick={() => handleDelete(doc.id)}
-                          className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50"
+                          onClick={() =>
+                            setDeleteTarget({ id: doc.id, title: doc.title })
+                          }
+                          className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 cursor-pointer"
                           title="Hapus"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -420,6 +448,59 @@ export default function AdminDocumentsPage() {
           </div>
         </div>
       </main>
+
+      {/* Custom Delete Warning Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 space-y-5 border border-[#E8DCCF] shadow-2xl text-center">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-lg font-extrabold text-[#361D10]">
+                Hapus Konten Ini?
+              </h3>
+              <p className="text-xs sm:text-sm text-[#6B5B51] leading-relaxed">
+                Apakah Anda yakin ingin menghapus konten{" "}
+                <strong className="text-[#361D10]">
+                  &ldquo;{deleteTarget.title}&rdquo;
+                </strong>{" "}
+                dari halaman [Riset & Edukasi]? Tindakan ini tidak dapat dibatalkan.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setDeleteTarget(null)}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-[#FAF7F2] hover:bg-[#EFE8DF] border border-[#E2D5C7] text-xs font-bold text-[#4A2D1B] transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={confirmDelete}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Menghapus...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Ya, Hapus</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Content Modal */}
       {isModalOpen && (
