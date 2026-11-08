@@ -11,6 +11,7 @@ interface AuthContextType {
   isLoading: boolean;
   isDemo: boolean;
   login: (email: string, pass: string, targetRole?: UserRole) => Promise<{ success: boolean; error?: string; role?: UserRole }>;
+  loginWithGoogle: (redirectPath?: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: { full_name: string; email: string; phone: string; password: string }) => Promise<{ success: boolean; error?: string }>;
   updateProfile: (data: { full_name: string; phone: string }) => Promise<void>;
   logout: () => Promise<void>;
@@ -109,6 +110,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 router.replace("/admin");
               }
             }
+          } else {
+            // Fallback untuk login Google OAuth bila baris di tabel profiles belum terbentuk
+            const googleProfile: Profile = {
+              id: session.user.id,
+              email: session.user.email || "",
+              full_name:
+                session.user.user_metadata?.full_name ||
+                session.user.user_metadata?.name ||
+                session.user.email?.split("@")[0] ||
+                "Pengguna TanyaTernak",
+              role: "USER",
+              is_active: true,
+              avatar_url:
+                session.user.user_metadata?.avatar_url ||
+                session.user.user_metadata?.picture ||
+                null,
+              phone: session.user.user_metadata?.phone || null,
+              created_at: session.user.created_at || new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+            setUser(googleProfile);
+            document.cookie = `tanyaternak_role=USER; path=/; max-age=86400; SameSite=Lax`;
           }
         }
       } catch (err) {
@@ -223,6 +246,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: false, error: "Gagal masuk ke akun." };
   };
 
+  const loginWithGoogle = async (
+    redirectPath = "/"
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const origin =
+        typeof window !== "undefined" ? window.location.origin : "";
+      const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(
+        redirectPath
+      )}`;
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Gagal menghubungkan ke Google Sign-In.";
+      return { success: false, error: message };
+    }
+  };
+
   const register = async (data: {
     full_name: string;
     email: string;
@@ -330,6 +388,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         isDemo,
         login,
+        loginWithGoogle,
         register,
         updateProfile,
         logout,
