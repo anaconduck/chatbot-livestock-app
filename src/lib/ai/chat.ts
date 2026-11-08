@@ -134,24 +134,20 @@ export async function sendChatMessage(
     };
   }
 
-  const isVertexExpressKey = cleanKey.startsWith("AQ.");
-  const endpoints = isVertexExpressKey
-    ? [
-        `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(
-          cleanKey
-        )}`,
-        `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.0-flash-001:generateContent?key=${encodeURIComponent(
-          cleanKey
-        )}`,
-      ]
-    : [
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(
-          cleanKey
-        )}`,
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(
-          cleanKey
-        )}`,
-      ];
+  const endpoints = [
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(
+      cleanKey
+    )}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(
+      cleanKey
+    )}`,
+    `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(
+      cleanKey
+    )}`,
+    `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.0-flash-001:generateContent?key=${encodeURIComponent(
+      cleanKey
+    )}`,
+  ];
 
   try {
     const result = await Promise.any(
@@ -167,7 +163,10 @@ export async function sendChatMessage(
   } catch (err: unknown) {
     let errorMsg = "Gagal terhubung ke Google Gemini API.";
     if (err instanceof AggregateError && err.errors?.length > 0) {
-      errorMsg = err.errors[0]?.message || errorMsg;
+      errorMsg = err.errors
+        .map((e: Error) => e?.message)
+        .filter(Boolean)
+        .join(" | ");
     } else if (err instanceof Error) {
       errorMsg = err.message;
     }
