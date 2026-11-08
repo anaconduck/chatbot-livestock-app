@@ -32,21 +32,27 @@ async function getChatIdentity(): Promise<ChatIdentity> {
     };
   }
 
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+  const hasSupabaseAuthCookie = cookieStore
+    .getAll()
+    .some((c) => c.name.startsWith("sb-"));
 
-    if (!authError && user) {
-      return {
-        userId: user.id,
-        authenticated: true,
-      };
+  if (hasSupabaseAuthCookie) {
+    try {
+      const supabase = await createClient();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (!authError && user) {
+        return {
+          userId: user.id,
+          authenticated: true,
+        };
+      }
+    } catch {
+      // Chat remains available as an anonymous session if auth is unavailable.
     }
-  } catch {
-    // Chat remains available as an anonymous session if auth is unavailable.
   }
 
   const existingVisitorId = cookieStore.get(ANONYMOUS_CHAT_COOKIE)?.value;

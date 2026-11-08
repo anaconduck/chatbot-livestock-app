@@ -1,6 +1,14 @@
 import "server-only";
+import dns from "node:dns";
 import { getServerEnv } from "@/lib/env";
 import type { ChatSource } from "@/types";
+
+// Paksa Node.js menggunakan jalur IPv4 terlebih dahulu agar tidak nyangkut (hang) pada jaringan IPv6 lokal
+try {
+  dns.setDefaultResultOrder("ipv4first");
+} catch {
+  // ignore
+}
 
 export interface ChatRequestPayload {
   query: string;
@@ -30,138 +38,165 @@ function cleanGeminiText(raw: string): string {
     .trim();
 }
 
-let cachedDynamicModel: string | null = null;
-
-/**
- * Cari otomatis nama model Flash gratis yang aktif di akun Google AI Studio jika model default berubah versi
- */
-async function discoverAvailableFlashModel(apiKey: string): Promise<string | null> {
-  if (cachedDynamicModel) return cachedDynamicModel;
+function parseErrorMessage(status: number, rawBody: string): string {
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(
-        apiKey
-      )}`,
-      { headers: { "x-goog-api-key": apiKey } }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    const models: Array<{
-      name?: string;
-      supportedGenerationMethods?: string[];
-    }> = data?.models || [];
-
-    const flashModel = models.find(
-      (m) =>
-        m.name &&
-        m.name.includes("gemini") &&
-        m.name.includes("flash") &&
-        !m.name.includes("image") &&
-        !m.name.includes("tts") &&
-        !m.name.includes("audio") &&
-        Array.isArray(m.supportedGenerationMethods) &&
-        m.supportedGenerationMethods.includes("generateContent")
-    );
-
-    if (flashModel?.name) {
-      cachedDynamicModel = flashModel.name.replace(/^models\//, "");
-      return cachedDynamicModel;
+    const parsed = JSON.parse(rawBody);
+    if (parsed?.error?.message) {
+      return `${status}: ${parsed.error.message}`;
     }
-    return null;
   } catch {
-    return null;
+    // ignore
   }
+  return `HTTP ${status}`;
 }
 
-async function callGeminiModel(
-  modelName: string,
+/**
+ * Jalur 1: Gemini Interactions API (`/v1beta/interactions`) — direkomendasikan Google untuk `gemini-3.8-flash`
+ */
+async function callGeminiInteractionsApi(
   apiKey: string,
   query: string
 ): Promise<{ answer: string; sources: ChatSource[] }> {
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000);
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/interactions?key=${encodeURIComponent(
+        apiKey
+      )}`,
+      {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
+        body: JSON.stringify({
+          model: "gemini-3.8-flash",
+          system_instruction: SYSTEM_INSTRUCTION,
+          input: query,
+        }),
+      }
+    );
+
+    const rawBody = await res.text();
+    if (!res.ok) {
+      throw new Error(parseErrorMessage(res.status, rawBody));
+    }
+
+    const data = JSON.parse(rawBody);
+    let extractedText = "";
+
+    if (typeof data?.output_text === "string" && data.output_text.trim()) {
+      extractedText = data.output_text.trim();
+    } else if (Array.isArray(data?.outputs)) {
+      extractedText = data.outputs
+        .filter((o: { type?: string; text?: string }) => o?.type === "text" || typeof o?.text === "string")
+        .map((o: { text?: string }) => o.text || "")
+        .join("\n")
+        .trim();
+    } else if (Array.isArray(data?.steps)) {
+      const texts: string[] = [];
+      for (const step of data.steps) {
+        if (typeof step?.text === "string") texts.push(step.text);
+        const parts = step?.content?.parts || step?.output?.parts || [];
+        if (Array.isArray(parts)) {
+          for (const p of parts) {
+            if (!p?.thought && typeof p?.text === "string") {
+              texts.push(p.text);
+            }
+          }
+        }
+      }
+      extractedText = texts.join("\n").trim();
+    }
+
+    if (!extractedText) {
+      throw new Error("Respons Interactions API kosong.");
+    }
+
+    return {
+      answer: cleanGeminiText(extractedText),
+      sources: [],
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
+ * Jalur 2: Gemini generateContent API (`/v1beta/models/gemini-3.8-flash:generateContent`) dengan thinkingLevel LOW
+ */
+async function callGeminiGenerateContent(
+  apiKey: string,
+  query: string
+): Promise<{ answer: string; sources: ChatSource[] }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000);
+
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(
     apiKey
   )}`;
 
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": apiKey,
-    },
-    body: JSON.stringify({
-      systemInstruction: {
-        parts: [{ text: SYSTEM_INSTRUCTION }],
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
       },
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: query }],
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [{ text: SYSTEM_INSTRUCTION }],
         },
-      ],
-      generationConfig: {
-        temperature: 0.4,
-        maxOutputTokens: 1500,
-      },
-    }),
-  });
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: query }],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: 1200,
+          thinkingConfig: {
+            thinkingLevel: "low",
+          },
+        },
+      }),
+    });
 
-  const rawBody = await res.text();
-  if (!res.ok) {
-    let errDetail = `HTTP ${res.status}`;
-    try {
-      const parsedErr = JSON.parse(rawBody);
-      if (parsedErr?.error?.message) {
-        errDetail = `${res.status}: ${parsedErr.error.message}`;
-      }
-    } catch {
-      // ignore
+    const rawBody = await res.text();
+    if (!res.ok) {
+      throw new Error(parseErrorMessage(res.status, rawBody));
     }
-    throw new Error(errDetail);
-  }
 
-  const data = JSON.parse(rawBody);
-  const parts: Array<{ text?: string; thought?: boolean }> =
-    data?.candidates?.[0]?.content?.parts || [];
-  const text =
-    parts
-      .filter((p) => !p.thought)
-      .map((p) => p.text || "")
-      .join("")
-      .trim() ||
-    parts
-      .map((p) => p.text || "")
-      .join("")
-      .trim();
+    const data = JSON.parse(rawBody);
+    const parts: Array<{ text?: string; thought?: boolean }> =
+      data?.candidates?.[0]?.content?.parts || [];
+    const text =
+      parts
+        .filter((p) => !p.thought)
+        .map((p) => p.text || "")
+        .join("")
+        .trim() ||
+      parts
+        .map((p) => p.text || "")
+        .join("")
+        .trim();
 
-  if (!text) {
-    throw new Error("Respons kosong dari Gemini API.");
-  }
-
-  const groundingChunks =
-    data?.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-  const groundedSources: ChatSource[] = [];
-
-  for (const chunk of groundingChunks) {
-    if (chunk?.web?.uri && chunk?.web?.title) {
-      let host = "Sumber Web";
-      try {
-        host = new URL(chunk.web.uri).hostname.replace(/^www\./, "");
-      } catch {
-        // ignore
-      }
-      groundedSources.push({
-        title: chunk.web.title,
-        url: chunk.web.uri,
-        sourceName: host,
-        snippet: `Referensi dari ${host}`,
-      });
+    if (!text) {
+      throw new Error("Respons kosong dari Gemini generateContent.");
     }
-  }
 
-  return {
-    answer: cleanGeminiText(text),
-    sources: groundedSources.slice(0, 4),
-  };
+    return {
+      answer: cleanGeminiText(text),
+      sources: [],
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export async function sendChatMessage(
@@ -181,12 +216,11 @@ export async function sendChatMessage(
   }
 
   try {
-    // 1. Panggil langsung model terbaru sesuai instruksi Google AI Studio (`gemini-3.8-flash`)
-    const result = await callGeminiModel(
-      "gemini-3.8-flash",
-      cleanKey,
-      payload.query
-    );
+    // Jalankan Interactions API & generateContent (thinkingLevel LOW) secara paralel, ambil yang paling cepat selesai
+    const result = await Promise.any([
+      callGeminiInteractionsApi(cleanKey, payload.query),
+      callGeminiGenerateContent(cleanKey, payload.query),
+    ]);
 
     return {
       answer: result.answer,
@@ -194,31 +228,16 @@ export async function sendChatMessage(
       message_id: `msg-${Date.now()}`,
       sources: result.sources,
     };
-  } catch (firstErr: unknown) {
-    // 2. Jika nama versi model berubah, deteksi otomatis model Flash gratis yang tersedia di akun
-    try {
-      const discoveredModel = await discoverAvailableFlashModel(cleanKey);
-      if (discoveredModel && discoveredModel !== "gemini-3.8-flash") {
-        const fallbackResult = await callGeminiModel(
-          discoveredModel,
-          cleanKey,
-          payload.query
-        );
-        return {
-          answer: fallbackResult.answer,
-          conversation_id: payload.conversation_id || `conv-${Date.now()}`,
-          message_id: `msg-${Date.now()}`,
-          sources: fallbackResult.sources,
-        };
-      }
-    } catch {
-      // ignore and report primary error
+  } catch (err: unknown) {
+    let errorMsg = "Gagal terhubung ke Google Gemini API.";
+    if (err instanceof AggregateError && err.errors?.length > 0) {
+      errorMsg = err.errors
+        .map((e: Error) => e?.message)
+        .filter(Boolean)
+        .join(" | ");
+    } else if (err instanceof Error) {
+      errorMsg = err.message;
     }
-
-    const errorMsg =
-      firstErr instanceof Error
-        ? firstErr.message
-        : "Gagal terhubung ke Google Gemini API.";
 
     return {
       answer: `[Status Gemini API Error]: ${errorMsg}`,

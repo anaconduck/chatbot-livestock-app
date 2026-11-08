@@ -205,15 +205,16 @@ export const FloatingChatbot: React.FC = () => {
       };
 
       setMessages((prev) => [...prev, aiMessage]);
-    } catch {
+    } catch (err: unknown) {
+      const errText =
+        err instanceof Error ? err.message : "Gagal menghubungi server.";
       setMessages((prev) => [
         ...prev,
         {
           id: `ai-${Date.now()}`,
           conversation_id: "quick-chat",
           role: "assistant",
-          content:
-            "Mode offline / simulasi: Pastikan sistem terhubung ke backend untuk menerima jawaban terkini.",
+          content: `Terjadi kendala koneksi: ${errText}`,
           created_at: new Date().toISOString(),
         },
       ]);
@@ -358,7 +359,7 @@ export const FloatingChatbot: React.FC = () => {
                 </div>
                 <div className="bg-white border border-[#EADBCE] rounded-2xl px-3 py-2 flex items-center gap-2">
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-[#DE992B]" />
-                  <span>ChickAI sedang mencari referensi...</span>
+                  <span>ChickAI sedang mengetik jawaban...</span>
                 </div>
               </div>
             )}
