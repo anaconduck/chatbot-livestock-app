@@ -78,98 +78,90 @@ async function callGeminiModel(
   apiKey: string,
   query: string
 ): Promise<{ answer: string; sources: ChatSource[] }> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 35000);
-
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(
     apiKey
   )}`;
 
-  try {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": apiKey,
+    },
+    body: JSON.stringify({
+      systemInstruction: {
+        parts: [{ text: SYSTEM_INSTRUCTION }],
       },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: SYSTEM_INSTRUCTION }],
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: query }],
         },
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: query }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 1500,
-        },
-      }),
-    });
+      ],
+      generationConfig: {
+        temperature: 0.4,
+        maxOutputTokens: 1500,
+      },
+    }),
+  });
 
-    const rawBody = await res.text();
-    if (!res.ok) {
-      let errDetail = `HTTP ${res.status}`;
+  const rawBody = await res.text();
+  if (!res.ok) {
+    let errDetail = `HTTP ${res.status}`;
+    try {
+      const parsedErr = JSON.parse(rawBody);
+      if (parsedErr?.error?.message) {
+        errDetail = `${res.status}: ${parsedErr.error.message}`;
+      }
+    } catch {
+      // ignore
+    }
+    throw new Error(errDetail);
+  }
+
+  const data = JSON.parse(rawBody);
+  const parts: Array<{ text?: string; thought?: boolean }> =
+    data?.candidates?.[0]?.content?.parts || [];
+  const text =
+    parts
+      .filter((p) => !p.thought)
+      .map((p) => p.text || "")
+      .join("")
+      .trim() ||
+    parts
+      .map((p) => p.text || "")
+      .join("")
+      .trim();
+
+  if (!text) {
+    throw new Error("Respons kosong dari Gemini API.");
+  }
+
+  const groundingChunks =
+    data?.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+  const groundedSources: ChatSource[] = [];
+
+  for (const chunk of groundingChunks) {
+    if (chunk?.web?.uri && chunk?.web?.title) {
+      let host = "Sumber Web";
       try {
-        const parsedErr = JSON.parse(rawBody);
-        if (parsedErr?.error?.message) {
-          errDetail = `${res.status}: ${parsedErr.error.message}`;
-        }
+        host = new URL(chunk.web.uri).hostname.replace(/^www\./, "");
       } catch {
         // ignore
       }
-      throw new Error(errDetail);
+      groundedSources.push({
+        title: chunk.web.title,
+        url: chunk.web.uri,
+        sourceName: host,
+        snippet: `Referensi dari ${host}`,
+      });
     }
-
-    const data = JSON.parse(rawBody);
-    const parts: Array<{ text?: string; thought?: boolean }> =
-      data?.candidates?.[0]?.content?.parts || [];
-    const text =
-      parts
-        .filter((p) => !p.thought)
-        .map((p) => p.text || "")
-        .join("")
-        .trim() ||
-      parts
-        .map((p) => p.text || "")
-        .join("")
-        .trim();
-
-    if (!text) {
-      throw new Error("Respons kosong dari Gemini API.");
-    }
-
-    const groundingChunks =
-      data?.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-    const groundedSources: ChatSource[] = [];
-
-    for (const chunk of groundingChunks) {
-      if (chunk?.web?.uri && chunk?.web?.title) {
-        let host = "Sumber Web";
-        try {
-          host = new URL(chunk.web.uri).hostname.replace(/^www\./, "");
-        } catch {
-          // ignore
-        }
-        groundedSources.push({
-          title: chunk.web.title,
-          url: chunk.web.uri,
-          sourceName: host,
-          snippet: `Referensi dari ${host}`,
-        });
-      }
-    }
-
-    return {
-      answer: cleanGeminiText(text),
-      sources: groundedSources.slice(0, 4),
-    };
-  } finally {
-    clearTimeout(timeout);
   }
+
+  return {
+    answer: cleanGeminiText(text),
+    sources: groundedSources.slice(0, 4),
+  };
 }
 
 export async function sendChatMessage(
