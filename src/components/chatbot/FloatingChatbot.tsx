@@ -241,8 +241,8 @@ export const FloatingChatbot: React.FC = () => {
         <div
           className={`mb-2 sm:mb-3 w-[calc(100vw-1.5rem)] bg-white rounded-2xl shadow-2xl border border-[#E8DCCF] flex flex-col overflow-hidden transition-all duration-200 animate-in fade-in slide-in-from-bottom-5 ${
             isMaximized
-              ? "max-w-[calc(100vw-1.5rem)] sm:max-w-[620px] md:max-w-[700px] sm:w-[620px] md:w-[700px] h-[550px] sm:h-[650px] max-h-[88vh] sm:max-h-[88vh]"
-              : "max-w-[300px] sm:max-w-[380px] sm:w-[380px] h-[390px] sm:h-[500px] max-h-[68vh] sm:max-h-[78vh]"
+              ? "max-w-[calc(100vw-1.5rem)] sm:max-w-[520px] md:max-w-[560px] sm:w-[520px] md:w-[560px] h-[450px] sm:h-[510px] max-h-[calc(100vh-8.5rem)] sm:max-h-[calc(100vh-9.5rem)]"
+              : "max-w-[300px] sm:max-w-[380px] sm:w-[380px] h-[390px] sm:h-[460px] max-h-[68vh] sm:max-h-[calc(100vh-10rem)]"
           }`}
         >
           {/* Chat Header */}
