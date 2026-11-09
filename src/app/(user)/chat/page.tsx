@@ -24,8 +24,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-const MAX_GUEST_CHATS = 3;
-const GUEST_CHAT_STORAGE_KEY = "tanyaternak_guest_quota_v2";
+const MAX_GUEST_CHATS = 7;
+const GUEST_CHAT_STORAGE_KEY = "tanyaternak_guest_quota_v3";
 const GUEST_QUOTA_RESET_MS = 24 * 60 * 60 * 1000; // 24 jam
 
 function readGuestQuota(): number {
@@ -140,8 +140,7 @@ function ChatInner() {
           id: `limit-${Date.now()}`,
           conversation_id: conversationId,
           role: "assistant",
-          content:
-            "Anda telah mencapai batas maksimal 3 kali chat tanpa login. Silakan masuk (login) sebagai pengguna untuk melanjutkan pertanyaan ke-4 dan berkonsultasi tanpa batas.",
+          content: `Anda telah mencapai batas maksimal ${MAX_GUEST_CHATS} kali chat tanpa login. Silakan masuk (login) sebagai pengguna untuk melanjutkan pertanyaan ke-${MAX_GUEST_CHATS + 1} dan berkonsultasi tanpa batas.`,
           created_at: new Date().toISOString(),
         },
       ]);
@@ -342,7 +341,7 @@ function ChatInner() {
                     <span>Akses Chat Tanpa Batas</span>
                   </div>
                   <p className="text-[11px] text-[#6B5B51] leading-relaxed">
-                    Sebagai pengguna yang telah login, Anda bebas berkonsultasi lebih dari 3 kali tanpa batas kuota.
+                    Sebagai pengguna yang telah login, Anda bebas berkonsultasi lebih dari {MAX_GUEST_CHATS} kali tanpa batas kuota.
                   </p>
                 </div>
 
@@ -359,7 +358,7 @@ function ChatInner() {
                   Status: Pengunjung Tamu
                 </p>
                 <p className="text-[11px] text-[#6B5B51] leading-relaxed">
-                  Pengunjung tanpa login memiliki kuota maksimal <strong>3 kali chat</strong> ({Math.min(guestChatCount, MAX_GUEST_CHATS)}/{MAX_GUEST_CHATS} terpakai). Masuk sebagai pengguna untuk chat ke-4 dan seterusnya tanpa batas.
+                  Pengunjung tanpa login memiliki kuota maksimal <strong>{MAX_GUEST_CHATS} kali chat</strong> ({Math.min(guestChatCount, MAX_GUEST_CHATS)}/{MAX_GUEST_CHATS} terpakai). Masuk sebagai pengguna untuk chat ke-{MAX_GUEST_CHATS + 1} dan seterusnya tanpa batas.
                 </p>
                 <Link
                   href="/login?redirect=/chat"

@@ -4,12 +4,12 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Send, X, Loader2, BookOpen, LogIn, ExternalLink } from "lucide-react";
+import { Send, X, Loader2, BookOpen, LogIn, ExternalLink, Maximize2, Minimize2 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 import type { ChatMessage } from "@/types";
 
-const MAX_GUEST_CHATS = 3;
-const GUEST_CHAT_STORAGE_KEY = "tanyaternak_guest_quota_v2";
+const MAX_GUEST_CHATS = 7;
+const GUEST_CHAT_STORAGE_KEY = "tanyaternak_guest_quota_v3";
 const GUEST_QUOTA_RESET_MS = 24 * 60 * 60 * 1000; // 24 jam
 
 function readGuestQuota(): number {
@@ -82,6 +82,7 @@ export const FloatingChatbot: React.FC = () => {
     pathname.startsWith("/admin");
 
   const [isOpen, setIsOpen] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
   const [showBubble, setShowBubble] = useState(true);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -147,8 +148,7 @@ export const FloatingChatbot: React.FC = () => {
           id: `limit-${Date.now()}`,
           conversation_id: conversationId || "quick-chat",
           role: "assistant",
-          content:
-            "Anda telah mencapai batas maksimal 3 kali chat tanpa login. Silakan masuk (login) sebagai pengguna untuk melanjutkan pertanyaan ke-4 dan berkonsultasi tanpa batas.",
+          content: `Anda telah mencapai batas maksimal ${MAX_GUEST_CHATS} kali chat tanpa login. Silakan masuk (login) sebagai pengguna untuk melanjutkan pertanyaan ke-${MAX_GUEST_CHATS + 1} dan berkonsultasi tanpa batas.`,
           created_at: new Date().toISOString(),
         },
       ]);
@@ -238,7 +238,13 @@ export const FloatingChatbot: React.FC = () => {
     <div className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end">
       {/* Expanded Chat Window */}
       {isOpen && (
-        <div className="mb-2 sm:mb-3 w-[calc(100vw-1.5rem)] max-w-[300px] sm:max-w-[380px] sm:w-[380px] h-[390px] sm:h-[500px] max-h-[68vh] sm:max-h-[78vh] bg-white rounded-2xl shadow-2xl border border-[#E8DCCF] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div
+          className={`mb-2 sm:mb-3 w-[calc(100vw-1.5rem)] bg-white rounded-2xl shadow-2xl border border-[#E8DCCF] flex flex-col overflow-hidden transition-all duration-200 animate-in fade-in slide-in-from-bottom-5 ${
+            isMaximized
+              ? "max-w-[calc(100vw-1.5rem)] sm:max-w-[620px] md:max-w-[700px] sm:w-[620px] md:w-[700px] h-[550px] sm:h-[650px] max-h-[88vh] sm:max-h-[88vh]"
+              : "max-w-[300px] sm:max-w-[380px] sm:w-[380px] h-[390px] sm:h-[500px] max-h-[68vh] sm:max-h-[78vh]"
+          }`}
+        >
           {/* Chat Header */}
           <div className="bg-[#4E2E1E] text-white p-2.5 sm:p-3.5 flex items-center justify-between shadow-sm">
             <div className="flex items-center gap-2 sm:gap-2.5">
@@ -264,9 +270,24 @@ export const FloatingChatbot: React.FC = () => {
 
             <div className="flex items-center gap-1">
               <button
+                type="button"
+                onClick={() => setIsMaximized((prev) => !prev)}
+                className="p-1.5 rounded-lg text-[#D8C7B8] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                title={isMaximized ? "Perkecil Tampilan" : "Perbesar Tampilan"}
+                aria-label={isMaximized ? "Perkecil Tampilan" : "Perbesar Tampilan"}
+              >
+                {isMaximized ? (
+                  <Minimize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                ) : (
+                  <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                )}
+              </button>
+              <button
+                type="button"
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-lg text-[#D8C7B8] hover:text-white hover:bg-white/10 transition-colors"
+                className="p-1.5 rounded-lg text-[#D8C7B8] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                 title="Tutup Chat"
+                aria-label="Tutup Chat"
               >
                 <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
@@ -405,7 +426,7 @@ export const FloatingChatbot: React.FC = () => {
               {isGuestLimitReached ? (
                 <div className="space-y-2 text-center">
                   <p className="font-semibold text-[#361D10]">
-                    Batas 3x chat tanpa akun telah habis. Silakan login sebagai pengguna untuk lanjut bertanya ke-4 dan seterusnya.
+                    Batas {MAX_GUEST_CHATS}x chat tanpa akun telah habis. Silakan login sebagai pengguna untuk lanjut bertanya ke-{MAX_GUEST_CHATS + 1} dan seterusnya.
                   </p>
                   <div className="flex items-center justify-center gap-2">
                     <Link
